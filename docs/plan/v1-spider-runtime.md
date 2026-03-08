@@ -1,0 +1,77 @@
+# v1-spider-runtime
+
+## Goal
+
+建立 Spider 运行时，包括 request / scheduler / session manager / engine / checkpoint / stats / streaming，让 Erlang 侧具备长期运行与可恢复 crawl 能力。
+
+## PRD Trace
+
+- REQ-0001-008
+- REQ-0001-009
+
+## Scope
+
+### 做什么
+
+- 建立 `Request`、`Scheduler`、`SessionManager`、`CrawlerEngine`、`Spider`、`CrawlResult`、`CrawlStats`
+- 支持 pause / resume / checkpoint
+- 支持 stream 模式与 blocked request retry
+- 支持结果导出与运行期 stats
+
+### 不做什么
+
+- 不在本计划里补完整文档站点
+- 不在本计划里引入分布式调度
+- 不在本计划里把所有浏览器细节再次实现一遍
+
+## Acceptance
+
+1. 一个最小 Spider 能从 `start_urls` 进入 `parse` 并产出 item
+2. 支持多 session 配置并按 session id 路由请求
+3. `pause` 后能生成 checkpoint，重启后可恢复 crawl
+4. `stream` 模式能逐项吐出 item，并可同时读取 stats
+5. 反作弊条款：必须有至少一个 checkpoint 恢复的 E2E 场景，不能只测 scheduler 内部函数
+
+## Files
+
+- Create: `apps/scrapling/src/scrapling_request.erl`
+- Create: `apps/scrapling/src/scrapling_scheduler.erl`
+- Create: `apps/scrapling/src/scrapling_session_manager.erl`
+- Create: `apps/scrapling/src/scrapling_checkpoint.erl`
+- Create: `apps/scrapling/src/scrapling_crawl_stats.erl`
+- Create: `apps/scrapling/src/scrapling_crawl_result.erl`
+- Create: `apps/scrapling/src/scrapling_crawler_engine.erl`
+- Create: `apps/scrapling/src/scrapling_spider.erl`
+- Create: `apps/scrapling/test/scrapling_spider_tests.erl`
+- Create: `apps/scrapling/test/scrapling_spider_e2e_tests.erl`
+
+## Steps
+
+1. 写失败测试（红）
+   - `scrapling_spider_tests.erl` 覆盖最小 crawl、request 复制、scheduler enqueue/dequeue、stats
+   - `scrapling_spider_e2e_tests.erl` 覆盖 pause/resume/checkpoint/stream
+2. 跑到红
+   - Run: `rebar3 eunit -m scrapling_spider_tests`
+   - Expected: 失败，原因是 Spider 运行时模块不存在
+3. 实现最小 Spider 运行时（绿）
+   - 先落 request / scheduler / engine 最小闭环
+4. 跑到绿
+   - Run: `rebar3 eunit -m scrapling_spider_tests`
+   - Expected: PASS
+5. 实现 checkpoint / stream / blocked retry（绿）
+   - 引入 checkpoint 持久化与恢复逻辑
+6. 再跑到绿
+   - Run: `rebar3 eunit -m scrapling_spider_e2e_tests`
+   - Expected: PASS
+7. 必要重构（仍绿）
+   - 抽取 hook、stats、session 配置口径
+8. E2E / 门禁
+   - Run: `rebar3 eunit -m scrapling_spider_tests -m scrapling_spider_e2e_tests`
+   - Expected: PASS
+
+## Risks
+
+- Spider callback 与 OTP 进程模型之间的接口语义要尽早固定
+- checkpoint 的格式一旦泄漏到公开 API，后续很难调整
+- blocked retry 需要和 fetcher 错误结构统一，否则诊断会混乱
+

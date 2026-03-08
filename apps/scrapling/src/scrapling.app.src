@@ -1,0 +1,8 @@
+{application, scrapling,
+ [{description, "Scrapling Erlang parity project"},
+  {vsn, "0.1.0-dev"},
+  {registered, []},
+  {modules, [scrapling]},
+  {applications, [kernel, stdlib]},
+  {env, []}
+ ]}.

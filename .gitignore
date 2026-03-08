@@ -1,0 +1,11 @@
+_build/
+*.beam
+*.ez
+erl_crash.dump
+rebar3.crashdump
+.tmp/
+.DS_Store
+*.log
+*.swp
+apps/*/ebin/
+apps/*/.eunit/
