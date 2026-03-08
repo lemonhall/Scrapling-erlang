@@ -4,6 +4,7 @@
     new/1,
     new/2,
     copy/1,
+    is_request/1,
     url/1,
     sid/1,
     callback/1,
@@ -40,6 +41,11 @@ copy(Request) ->
                               dont_filter => dont_filter(Request),
                               meta => maps:merge(#{}, meta(Request)),
                               retry_count => maps:get(retry_count, Request, 0)}).
+
+is_request(#{url := _Url, session_opts := _SessionOpts}) ->
+    true;
+is_request(_) ->
+    false.
 
 url(Request) ->
     maps:get(url, Request).

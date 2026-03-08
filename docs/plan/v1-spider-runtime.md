@@ -45,6 +45,7 @@
 - Create: `apps/scrapling/test/scrapling_request_tests.erl`
 - Create: `apps/scrapling/test/scrapling_scheduler_tests.erl`
 - Create: `apps/scrapling/test/scrapling_session_manager_tests.erl`
+- Create: `apps/scrapling/test/scrapling_test_spider_minimal.erl`
 - Create: `apps/scrapling/test/scrapling_spider_tests.erl`
 - Create: `apps/scrapling/test/scrapling_spider_e2e_tests.erl`
 
@@ -87,7 +88,8 @@
 - 已完成：`scrapling_scheduler_tests` 固化空队列、优先级、去重与快照恢复语义
 - 已完成：`scrapling_session_manager` 首轮切片，支持默认 session、按 `sid` 路由、自定义 fetch adapter、现有 static/dynamic/stealth session pid 路由，以及请求 `meta` 合并回 response
 - 已完成：`scrapling_session_manager_tests` 固化默认 session、重复 ID 错误、路由与 response `meta/request` 回填语义
-- 待完成：`scrapling_crawler_engine` 与最小 spider 闭环
+- 已完成：`scrapling_crawl_stats` / `scrapling_crawl_result` / `scrapling_crawler_engine` / `scrapling_spider` 最小串行 crawl 闭环
+- 已完成：`scrapling_spider_tests` 固化 `start_urls -> parse -> item -> follow-up request` 与 `allowed_domains` 过滤语义
 - 待完成：checkpoint / pause-resume / stream / blocked retry
 
 ## Evidence
@@ -95,4 +97,5 @@
 - `rebar3 eunit -m scrapling_request_tests`
 - `rebar3 eunit -m scrapling_scheduler_tests`
 - `rebar3 eunit -m scrapling_session_manager_tests`
+- `rebar3 eunit -m scrapling_spider_tests`
 - `rebar3 eunit`
