@@ -1,10 +1,25 @@
 import base64
-import re
 import sys
 import time
 import urllib.parse
 import urllib.request
+from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
+
+
+VALID_WAIT_SELECTOR_STATES = {"attached", "detached", "hidden", "visible"}
+
+
+class ElementCollector(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.elements: list[tuple[str, dict[str, str]]] = []
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        self.elements.append((tag.lower(), normalize_attrs(attrs)))
+
+    def handle_startendtag(self, tag: str, attrs) -> None:
+        self.elements.append((tag.lower(), normalize_attrs(attrs)))
 
 
 def parse_request() -> dict[str, str]:
@@ -39,6 +54,20 @@ def encode_headers(headers) -> str:
     return base64.b64encode("\n".join(lines).encode("utf-8")).decode("ascii")
 
 
+def normalize_attrs(attrs) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    for name, value in attrs:
+        normalized[(name or "").lower()] = "" if value is None else str(value)
+    return normalized
+
+
+def parse_elements(html: str) -> list[tuple[str, dict[str, str]]]:
+    parser = ElementCollector()
+    parser.feed(html)
+    parser.close()
+    return parser.elements
+
+
 def is_blocked(url: str, blocked_domains: str | None) -> bool:
     if not blocked_domains:
         return False
@@ -53,23 +82,54 @@ def is_blocked(url: str, blocked_domains: str | None) -> bool:
 
 
 def selector_present(html: str, selector: str | None) -> bool:
+    return selector_state_satisfied(html, selector, "attached")
+
+
+def selector_state_satisfied(html: str, selector: str | None, state: str) -> bool:
     if not selector:
         return True
     selector = selector.strip()
     if not selector:
         return True
+    elements = [attrs for tag, attrs in parse_elements(html) if selector_matches(tag, attrs, selector)]
+    attached = bool(elements)
+    visible = any(element_visible(attrs) for attrs in elements)
+
+    if state == "attached":
+        return attached
+    if state == "visible":
+        return visible
+    if state == "hidden":
+        return not visible
+    if state == "detached":
+        return not attached
+    return False
+
+
+def selector_matches(tag: str, attrs: dict[str, str], selector: str) -> bool:
     if selector.startswith("#"):
-        token = re.escape(selector[1:])
-        return re.search(rf'id=["\']{token}["\']', html) is not None
+        return attrs.get("id", "") == selector[1:]
     if selector.startswith("."):
-        token = re.escape(selector[1:])
-        return re.search(rf'class=["\'][^"\']*\b{token}\b[^"\']*["\']', html) is not None
+        return class_contains(attrs.get("class", ""), selector[1:])
     if "." in selector:
-        tag, _, klass = selector.partition(".")
-        tag_ok = re.search(rf'<\s*{re.escape(tag)}\b', html) is not None
-        class_ok = selector_present(html, "." + klass)
-        return tag_ok and class_ok
-    return re.search(rf'<\s*{re.escape(selector)}\b', html) is not None
+        wanted_tag, _, klass = selector.partition(".")
+        return tag == wanted_tag and class_contains(attrs.get("class", ""), klass)
+    return tag == selector
+
+
+def class_contains(value: str, token: str) -> bool:
+    return token in value.split()
+
+
+def element_visible(attrs: dict[str, str]) -> bool:
+    if "hidden" in attrs:
+        return False
+    style = attrs.get("style", "").replace(" ", "").lower()
+    if "display:none" in style or "visibility:hidden" in style:
+        return False
+    if attrs.get("aria-hidden", "").lower() == "true":
+        return False
+    return True
 
 
 def do_ping() -> dict[str, str]:
@@ -80,6 +140,14 @@ def do_fetch(request: dict[str, str]) -> dict[str, str]:
     url = request["url"]
     if is_blocked(url, request.get("blocked_domains")):
         return {"ok": "false", "type": "blocked_domain", "message": f"Blocked domain: {url}"}
+
+    wait_selector_state = request.get("wait_selector_state", "attached")
+    if wait_selector_state not in VALID_WAIT_SELECTOR_STATES:
+        return {
+            "ok": "false",
+            "type": "invalid_wait_selector_state",
+            "message": "wait_selector_state must be one of attached, detached, hidden, visible",
+        }
 
     timeout = int(request.get("timeout_ms", "30000")) / 1000.0
     method = request.get("method", "GET").upper()
@@ -115,8 +183,13 @@ def do_fetch(request: dict[str, str]) -> dict[str, str]:
 
     text = body.decode("utf-8", errors="replace")
     wait_selector = request.get("wait_selector")
-    if not selector_present(text, wait_selector):
-        return {"ok": "false", "type": "selector_not_found", "message": wait_selector or ""}
+    if not selector_state_satisfied(text, wait_selector, wait_selector_state):
+        error_type = "selector_not_found" if wait_selector_state == "attached" else "selector_state_not_satisfied"
+        return {
+            "ok": "false",
+            "type": error_type,
+            "message": wait_selector or "",
+        }
 
     return {
         "ok": "true",

@@ -37,7 +37,10 @@ fetch(Url, Opts) when is_map(Opts) ->
     end.
 
 validate_fetch_opts(Opts) ->
-    validate_cdp_url(maps:get(cdp_url, Opts, undefined)).
+    case validate_cdp_url(maps:get(cdp_url, Opts, undefined)) of
+        ok -> validate_wait_selector_state(maps:get(wait_selector_state, Opts, undefined));
+        Error -> Error
+    end.
 
 validate_cdp_url(undefined) ->
     ok;
@@ -68,6 +71,17 @@ unsupported_cdp_url_error() ->
     {error,
      #{type => <<"unsupported_cdp_url">>,
        message => <<"cdp_url is not supported by the current browser sidecar">>}}.
+
+validate_wait_selector_state(undefined) ->
+    ok;
+validate_wait_selector_state(State) ->
+    case lists:member(to_list(State), ["attached", "detached", "hidden", "visible"]) of
+        true -> ok;
+        false ->
+            {error,
+             #{type => <<"invalid_wait_selector_state">>,
+               message => <<"wait_selector_state must be one of attached, detached, hidden, visible">>}}
+    end.
 
 fetch_params(Url, Opts) ->
     Base = [{"command", "fetch"},
