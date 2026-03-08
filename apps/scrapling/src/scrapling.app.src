@@ -5,6 +5,7 @@
   {modules, [scrapling,
              scrapling_browser_port,
              scrapling_dynamic_fetcher,
+             scrapling_dynamic_session,
              scrapling_selector,
              scrapling_selectors,
              scrapling_storage,
