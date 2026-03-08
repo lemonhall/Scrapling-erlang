@@ -2,13 +2,13 @@
 
 `Scrapling-erlang` 的目标，是把本机源码仓 `E:\development\Scrapling` 在 **Erlang/OTP** 上做成能力对等实现。
 
-当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator** 的首轮实现，并已通过当前全量 `eunit` 门禁。
+当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator + browser sidecar/dynamic fetcher 首刀**，并已通过当前全量 `eunit` 门禁。
 
 ## 当前状态
 
 - 源项目基线：本机 `E:\development\Scrapling`
 - 源项目版本快照：`scrapling/__init__.py` 显示 `0.4.1`
-- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、本地 HTTP fixture server，与 `23` 条 eunit 测试闭环
+- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher、本地 HTTP fixture server，与 `31` 条 eunit 测试闭环
 - 默认目标：让 **Erlang / BEAM 社区** 获得与源项目等价的解析、抓取、蜘蛛、CLI、AI/MCP 能力
 
 ## 文档入口

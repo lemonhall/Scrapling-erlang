@@ -31,7 +31,7 @@
 | M1 仓库基建 | 建立 `rebar3` 骨架、测试骨架、脚本骨架、文档矩阵 | `rebar.config`、`apps/scrapling/`、`scripts/erlang-env.ps1`、最小 eunit 全部到位；文档链路不缺口 | `rebar3 eunit -m scrapling_bootstrap_tests` | done |
 | M2 Parser / Adaptive | Selector、Selectors、导航、存储、relocate | 本地 fixture 上完成 CSS/XPath/regex/navigation/save/retrieve/relocate 行为 | `rebar3 eunit -m scrapling_selector_tests`；`rebar3 eunit -m scrapling_adaptive_tests` | doing |
 | M3 Static Fetchers | HTTP Fetcher、Session、ProxyRotator、统一 Response | GET/POST/PUT/DELETE、session 复用、headers/cookies/proxy 全覆盖 | `rebar3 eunit -m scrapling_fetcher_tests`；`rebar3 eunit -m scrapling_session_tests`；`rebar3 eunit -m scrapling_fetcher_e2e_tests` | done |
-| M4 Browser Fetchers | Dynamic / Stealth / browser sidecar | wait / page action / wait selector / blocked domains / stealth 配置可工作 | `rebar3 eunit -m scrapling_dynamic_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_fetcher_tests` | todo |
+| M4 Browser Fetchers | Dynamic / Stealth / browser sidecar | wait / page action / wait selector / blocked domains / stealth 配置可工作 | `rebar3 eunit -m scrapling_browser_contract_tests`；`rebar3 eunit -m scrapling_dynamic_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_fetcher_tests` | doing |
 | M5 Spider Runtime | Request、Scheduler、SessionManager、Engine、Spider、checkpoint、stream | crawl / pause / resume / stats / blocked retry / export 路径闭环 | `rebar3 eunit -m scrapling_spider_tests`；`rebar3 eunit -m scrapling_spider_e2e_tests` | todo |
 | M6 CLI / AI / Docs | CLI、shell、MCP、文档对等、示例与证据 | 命令入口存在且能跑最小案例；PRD/计划/测试/证据闭环 | `rebar3 eunit -m scrapling_cli_tests`；`rebar3 eunit -m scrapling_mcp_tests`；`rebar3 eunit` | todo |
 
@@ -54,7 +54,7 @@
 | REQ-0001-002 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_selector_tests`；`rebar3 eunit -m scrapling_selectors_tests` | 当前证据：已补齐 `parent/siblings/next/previous/find_ancestor`，并对齐多 class CSS 选择语义，selector / selectors 测试已通过 | doing |
 | REQ-0001-003 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_adaptive_tests` | 当前证据：手工 `save/retrieve/relocate` 与 `XPath adaptive/auto_save` slice 已通过 | doing |
 | REQ-0001-004 | `v1-fetchers-static` | `rebar3 eunit -m scrapling_fetcher_tests`；`rebar3 eunit -m scrapling_fetcher_e2e_tests` | 当前证据：静态 GET/POST/PUT/DELETE、统一 Response、本地 HTTP fixture server 已通过 | done |
-| REQ-0001-005 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_dynamic_fetcher_tests` | `_build/test/logs/...` | todo |
+| REQ-0001-005 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_browser_contract_tests`；`rebar3 eunit -m scrapling_dynamic_fetcher_tests` | 当前证据：Port sidecar 契约、最小 dynamic fetcher、本地 sidecar E2E 已通过；更完整浏览器行为待继续扩充 | doing |
 | REQ-0001-006 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_stealth_fetcher_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-007 | `v1-fetchers-static` / `v1-fetchers-browser` | `rebar3 eunit -m scrapling_session_tests` | 当前证据：静态 session 的 cookies / headers / proxy rotation 已通过；浏览器侧待 M4 | doing |
 | REQ-0001-008 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_tests` | `_build/test/logs/...` | todo |

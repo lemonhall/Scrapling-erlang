@@ -1,0 +1,149 @@
+import base64
+import re
+import sys
+import time
+import urllib.parse
+import urllib.request
+from urllib.error import HTTPError, URLError
+
+
+def parse_request() -> dict[str, str]:
+    line = sys.stdin.readline()
+    if not line:
+        return {"command": "ping"}
+    pairs = urllib.parse.parse_qsl(line.strip(), keep_blank_values=True)
+    return {key: value for key, value in pairs}
+
+
+def encode_response(values: dict[str, str]) -> str:
+    return urllib.parse.urlencode(values)
+
+
+def decode_headers(value: str) -> dict[str, str]:
+    if not value:
+        return {}
+    raw = base64.b64decode(value.encode("ascii")).decode("utf-8")
+    headers: dict[str, str] = {}
+    for line in raw.splitlines():
+        if not line:
+            continue
+        name, _, header_value = line.partition(":")
+        headers[name.strip()] = header_value.strip()
+    return headers
+
+
+def encode_headers(headers) -> str:
+    lines = []
+    for name, value in headers.items():
+        lines.append(f"{name}: {value}")
+    return base64.b64encode("\n".join(lines).encode("utf-8")).decode("ascii")
+
+
+def is_blocked(url: str, blocked_domains: str | None) -> bool:
+    if not blocked_domains:
+        return False
+    hostname = urllib.parse.urlparse(url).hostname or ""
+    for domain in blocked_domains.split(","):
+        domain = domain.strip()
+        if not domain:
+            continue
+        if hostname == domain or hostname.endswith("." + domain):
+            return True
+    return False
+
+
+def selector_present(html: str, selector: str | None) -> bool:
+    if not selector:
+        return True
+    selector = selector.strip()
+    if not selector:
+        return True
+    if selector.startswith("#"):
+        token = re.escape(selector[1:])
+        return re.search(rf'id=["\']{token}["\']', html) is not None
+    if selector.startswith("."):
+        token = re.escape(selector[1:])
+        return re.search(rf'class=["\'][^"\']*\b{token}\b[^"\']*["\']', html) is not None
+    if "." in selector:
+        tag, _, klass = selector.partition(".")
+        tag_ok = re.search(rf'<\s*{re.escape(tag)}\b', html) is not None
+        class_ok = selector_present(html, "." + klass)
+        return tag_ok and class_ok
+    return re.search(rf'<\s*{re.escape(selector)}\b', html) is not None
+
+
+def do_ping() -> dict[str, str]:
+    return {"ok": "true", "name": "scrapling-browser-sidecar", "protocol_version": "1"}
+
+
+def do_fetch(request: dict[str, str]) -> dict[str, str]:
+    url = request["url"]
+    if is_blocked(url, request.get("blocked_domains")):
+        return {"ok": "false", "type": "blocked_domain", "message": f"Blocked domain: {url}"}
+
+    timeout = int(request.get("timeout_ms", "30000")) / 1000.0
+    method = request.get("method", "GET").upper()
+    headers = decode_headers(request.get("headers_b64", ""))
+    proxy = request.get("proxy")
+
+    opener = urllib.request.build_opener()
+    if proxy:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+
+    req = urllib.request.Request(url=url, headers=headers, method=method)
+    try:
+        with opener.open(req, timeout=timeout) as response:
+            body = response.read()
+            status = response.getcode()
+            reason = getattr(response, "reason", "OK") or "OK"
+            final_url = response.geturl()
+            response_headers = dict(response.headers.items())
+    except HTTPError as error:
+        body = error.read()
+        status = error.code
+        reason = error.reason or "HTTP Error"
+        final_url = error.geturl()
+        response_headers = dict(error.headers.items())
+    except URLError as error:
+        return {"ok": "false", "type": "network_error", "message": str(error.reason)}
+    except Exception as error:
+        return {"ok": "false", "type": "sidecar_exception", "message": str(error)}
+
+    wait_ms = int(request.get("wait_ms", "0") or "0")
+    if wait_ms > 0:
+        time.sleep(wait_ms / 1000.0)
+
+    text = body.decode("utf-8", errors="replace")
+    wait_selector = request.get("wait_selector")
+    if not selector_present(text, wait_selector):
+        return {"ok": "false", "type": "selector_not_found", "message": wait_selector or ""}
+
+    return {
+        "ok": "true",
+        "status_code": str(status),
+        "reason_phrase": str(reason),
+        "url": final_url,
+        "method": method,
+        "body_b64": base64.b64encode(body).decode("ascii"),
+        "headers_b64": encode_headers(response_headers),
+        "engine": "python-sidecar",
+        "headless": request.get("headless", "true"),
+    }
+
+
+def main() -> int:
+    request = parse_request()
+    command = request.get("command", "ping")
+    if command == "ping":
+        response = do_ping()
+    elif command == "fetch":
+        response = do_fetch(request)
+    else:
+        response = {"ok": "false", "type": "unknown_command", "message": command}
+    sys.stdout.write(encode_response(response) + "\n")
+    sys.stdout.flush()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

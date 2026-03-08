@@ -3,6 +3,8 @@
   {vsn, "0.1.0-dev"},
   {registered, []},
   {modules, [scrapling,
+             scrapling_browser_port,
+             scrapling_dynamic_fetcher,
              scrapling_selector,
              scrapling_selectors,
              scrapling_storage,
