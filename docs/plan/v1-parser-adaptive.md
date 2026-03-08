@@ -4,6 +4,12 @@
 
 建立 `Selector / Selectors` 解析核心，以及 adaptive 存储与 `relocate` 行为，让 Erlang 侧具备源项目 parser 的核心价值。
 
+## Status
+
+- 状态：doing
+- 当前完成：最小 `from_html/1`、`xpath/2`、`text/1`、`attribute/2` 已落地
+- 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit`
+
 ## PRD Trace
 
 - REQ-0001-002
@@ -73,4 +79,3 @@
 - CSS / XPath 支持的库选型会影响后续 API 语义稳定性
 - adaptive 匹配如果没有稳定的数据契约，后面 fetcher / spider 接口会返工
 - JSON / 文本处理要提早统一编码策略
-
