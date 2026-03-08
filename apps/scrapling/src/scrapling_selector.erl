@@ -250,8 +250,26 @@ maybe_save(false, _Identifier, _Node) ->
     ok.
 
 css_to_xpath(Selector) ->
+    Trimmed = string:trim(Selector),
+    case parse_css_pseudo(Trimmed) of
+        {text, Base} -> css_to_xpath_base(Base) ++ "/text()";
+        {attr, Base, Attr} -> css_to_xpath_base(Base) ++ "/@" ++ Attr;
+        none -> css_to_xpath_base(Trimmed)
+    end.
+
+css_to_xpath_base(Selector) ->
     Parts = [simple_selector_to_xpath(Token) || Token <- string:tokens(string:trim(Selector), " "), Token =/= []],
     "//" ++ string:join(Parts, "//").
+
+parse_css_pseudo(Selector) ->
+    case re:run(Selector, "^(.*)::attr\\(([^)]+)\\)$", [{capture, [1,2], list}]) of
+        {match, [Base, Attr]} -> {attr, string:trim(Base), string:trim(Attr)};
+        nomatch ->
+            case lists:suffix("::text", Selector) of
+                true -> {text, string:trim(lists:sublist(Selector, erlang:length(Selector) - erlang:length("::text")))};
+                false -> none
+            end
+    end.
 
 simple_selector_to_xpath(Token) ->
     Parsed = parse_simple_selector(Token, #{tag => [], id => undefined, classes => [], attrs => []}),

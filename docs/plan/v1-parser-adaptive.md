@@ -7,7 +7,7 @@
 ## Status
 
 - 状态：doing
-- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`re/2`、`re_first/2`、`get/1`、`getall/1`、手工 `save/retrieve/relocate` 与 `XPath/CSS adaptive/auto_save` 已落地，并具备 `Selectors` 集合包装
+- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`re/2`、`re_first/2`、`get/1`、`getall/1`、CSS `::text` / `::attr()`、手工 `save/retrieve/relocate` 与 `XPath/CSS adaptive/auto_save` 已落地，并具备 `Selectors` 集合包装
 - 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit`
 
 ## PRD Trace

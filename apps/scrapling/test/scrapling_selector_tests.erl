@@ -51,6 +51,14 @@ selector_getters_test() ->
     ?assertEqual(["<h1>Scrapling Erlang</h1>"], scrapling_selector:getall(Heading)),
     ?assertEqual("Scrapling Erlang", scrapling_selector:get(HeadingText)).
 
+css_pseudo_text_and_attr_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    LinkTexts = scrapling_selector:css("a::text", Doc),
+    LinkHrefs = scrapling_selector:css("a::attr(href)", Doc),
+    ?assertEqual(["Read docs"], [scrapling_selector:get(Node) || Node <- LinkTexts]),
+    ?assertEqual(["/docs"], [scrapling_selector:get(Node) || Node <- LinkHrefs]).
+
 read_fixture(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),
