@@ -45,6 +45,37 @@ spider_pause_saves_checkpoint_test() ->
         ok = scrapling_checkpoint:cleanup(Checkpoint)
     end.
 
+spider_stream_yields_items_and_live_stats_test() ->
+    TestPid = self(),
+    GateRef = make_ref(),
+    Manager0 = scrapling_session_manager:new(),
+    Fetcher = fun(Request) -> fetch_stream_page(TestPid, GateRef, Request) end,
+    {ok, Manager1} = scrapling_session_manager:add(<<"default">>, scrapling_session_manager:custom(Fetcher), Manager0),
+    {ok, Stream} = scrapling_spider:stream(scrapling_test_spider_minimal, #{session_manager => Manager1}),
+
+    {ok, FirstItem} = scrapling_spider:next(Stream, 2000),
+    ?assertEqual(#{kind => <<"list">>, title => <<"List Page">>}, FirstItem),
+
+    WorkerPid = receive
+        {detail_fetch_started, StreamWorkerPid, GateRef0} when GateRef0 =:= GateRef ->
+            StreamWorkerPid
+    after 2000 ->
+        erlang:error(stream_detail_gate_timeout)
+    end,
+
+    Stats1 = scrapling_spider:stats(Stream),
+    ?assertEqual(1, scrapling_crawl_stats:requests_count(Stats1)),
+    ?assertEqual(1, scrapling_crawl_stats:items_scraped(Stats1)),
+
+    WorkerPid ! {allow_detail_fetch, GateRef},
+    {ok, SecondItem} = scrapling_spider:next(Stream, 2000),
+    ?assertEqual(#{kind => <<"detail">>, title => <<"Detail Page">>}, SecondItem),
+    ?assertEqual(done, scrapling_spider:next(Stream, 2000)),
+
+    Stats2 = scrapling_spider:stats(Stream),
+    ?assertEqual(2, scrapling_crawl_stats:requests_count(Stats2)),
+    ?assertEqual(2, scrapling_crawl_stats:items_scraped(Stats2)).
+
 fetch_page(Request) ->
     Url = scrapling_request:url(Request),
     case Url of
@@ -60,6 +91,23 @@ fetch_full_page(Request) ->
         <<"https://example.com/list">> ->
             scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>List Page</h1><a class='next' href='https://example.com/detail'>Next</a></body></html>">>, Url, get, [], #{});
         <<"https://example.com/detail">> ->
+            scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>Detail Page</h1></body></html>">>, Url, get, [], #{});
+        _ ->
+            scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>Unknown</h1></body></html>">>, Url, get, [], #{})
+    end.
+
+fetch_stream_page(TestPid, GateRef, Request) ->
+    Url = scrapling_request:url(Request),
+    case Url of
+        <<"https://example.com/list">> ->
+            scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>List Page</h1><a class='next' href='https://example.com/detail'>Next</a></body></html>">>, Url, get, [], #{});
+        <<"https://example.com/detail">> ->
+            TestPid ! {detail_fetch_started, self(), GateRef},
+            receive
+                {allow_detail_fetch, GateRef} -> ok
+            after 2000 ->
+                erlang:error(stream_detail_release_timeout)
+            end,
             scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>Detail Page</h1></body></html>">>, Url, get, [], #{});
         _ ->
             scrapling_response:new(200, <<"OK">>, [{"content-type", "text/html; charset=utf-8"}], <<"<html><body><h1>Unknown</h1></body></html>">>, Url, get, [], #{})

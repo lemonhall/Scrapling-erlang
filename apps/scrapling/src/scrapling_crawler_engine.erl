@@ -22,8 +22,9 @@ loop(SpiderModule, SessionManager0, Scheduler0, Items0, Stats0, AllowedDomains, 
                     case scrapling_session_manager:fetch(Request, SessionManager0) of
                         {ok, Response, SessionManager1} ->
                             Stats1 = scrapling_crawl_stats:inc_requests(Stats0),
+                            notify_stats(Stats1, Opts),
                             Results = callback_results(SpiderModule, Request, Response),
-                            {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1),
+                            {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1, Opts),
                             case maybe_pause(Scheduler2, Items1, Stats2, Opts) of
                                 continue ->
                                     loop(SpiderModule, SessionManager1, Scheduler2, Items1, Stats2, AllowedDomains, Opts);
@@ -31,7 +32,9 @@ loop(SpiderModule, SessionManager0, Scheduler0, Items0, Stats0, AllowedDomains, 
                                     Result
                             end;
                         {error, _Error, SessionManager1} ->
-                            loop(SpiderModule, SessionManager1, Scheduler1, Items0, scrapling_crawl_stats:inc_failed(Stats0), AllowedDomains, Opts)
+                            Stats1 = scrapling_crawl_stats:inc_failed(Stats0),
+                            notify_stats(Stats1, Opts),
+                            loop(SpiderModule, SessionManager1, Scheduler1, Items0, Stats1, AllowedDomains, Opts)
                     end
             end
     end.
@@ -73,17 +76,20 @@ normalize_results(undefined) -> [];
 normalize_results(Results) when is_list(Results) -> Results;
 normalize_results(Result) -> [Result].
 
-consume_results([], Scheduler, Items, Stats) ->
+consume_results([], Scheduler, Items, Stats, _Opts) ->
     {Scheduler, Items, Stats};
-consume_results([undefined | Rest], Scheduler, Items, Stats) ->
-    consume_results(Rest, Scheduler, Items, Stats);
-consume_results([Result | Rest], Scheduler0, Items0, Stats0) ->
+consume_results([undefined | Rest], Scheduler, Items, Stats, Opts) ->
+    consume_results(Rest, Scheduler, Items, Stats, Opts);
+consume_results([Result | Rest], Scheduler0, Items0, Stats0, Opts) ->
     case scrapling_request:is_request(Result) of
         true ->
             {_Accepted, Scheduler1} = scrapling_scheduler:enqueue(Result, Scheduler0),
-            consume_results(Rest, Scheduler1, Items0, Stats0);
+            consume_results(Rest, Scheduler1, Items0, Stats0, Opts);
         false ->
-            consume_results(Rest, Scheduler0, [Result | Items0], scrapling_crawl_stats:inc_items(Stats0))
+            Stats1 = scrapling_crawl_stats:inc_items(Stats0),
+            notify_item(Result, Stats1, Opts),
+            notify_stats(Stats1, Opts),
+            consume_results(Rest, Scheduler0, [Result | Items0], Stats1, Opts)
     end.
 
 enqueue_all([], Scheduler) ->
@@ -119,6 +125,30 @@ maybe_save_checkpoint(Scheduler, Opts) ->
             scrapling_checkpoint:save(CheckpointManager, scrapling_scheduler:snapshot(Scheduler));
         _ ->
             ok
+    end.
+
+notify_item(Item, Stats, Opts) ->
+    case maps:get(on_item, Opts, undefined) of
+        Hook when is_function(Hook, 2) ->
+            safe_invoke(fun() -> Hook(Item, Stats) end);
+        _ ->
+            ok
+    end.
+
+notify_stats(Stats, Opts) ->
+    case maps:get(on_stats, Opts, undefined) of
+        Hook when is_function(Hook, 1) ->
+            safe_invoke(fun() -> Hook(Stats) end);
+        _ ->
+            ok
+    end.
+
+safe_invoke(Fun) ->
+    try
+        Fun(),
+        ok
+    catch
+        _:_ -> ok
     end.
 
 ensure_loaded(Module) ->
