@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2]).
+-export([from_html/1, xpath/2, xpath/3, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -14,6 +14,29 @@ xpath(Query, Doc) when is_list(Query) ->
     xmerl_xpath:string(Query, Doc);
 xpath(Query, Doc) when is_binary(Query) ->
     xpath(binary_to_list(Query), Doc).
+
+xpath(Query, Doc, Opts) when is_map(Opts) ->
+    Identifier = maps:get(identifier, Opts, Query),
+    AutoSave = maps:get(auto_save, Opts, false),
+    Adaptive = maps:get(adaptive, Opts, false),
+    case xpath(Query, Doc) of
+        [First | _] = Matches ->
+            maybe_save(AutoSave, Identifier, First),
+            Matches;
+        [] when Adaptive =:= true ->
+            case retrieve(Identifier) of
+                undefined -> [];
+                Saved ->
+                    Relocated = relocate(Doc, Saved),
+                    case {AutoSave, Relocated} of
+                        {true, [First | _]} -> maybe_save(true, Identifier, First);
+                        _ -> ok
+                    end,
+                    Relocated
+            end;
+        [] ->
+            []
+    end.
 
 css(Selector, Doc) when is_binary(Selector) ->
     css(binary_to_list(Selector), Doc);
@@ -197,6 +220,11 @@ common_prefix_count([Item | LeftRest], [Item | RightRest]) ->
     1 + common_prefix_count(LeftRest, RightRest);
 common_prefix_count(_, _) ->
     0.
+
+maybe_save(true, Identifier, Node) ->
+    save(Node, Identifier);
+maybe_save(false, _Identifier, _Node) ->
+    ok.
 
 css_to_xpath(Selector) ->
     Parts = [simple_selector_to_xpath(Token) || Token <- string:tokens(string:trim(Selector), " "), Token =/= []],
