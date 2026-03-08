@@ -84,7 +84,9 @@
 - 已完成：`scrapling_stealth_fetcher` 最小包装层，先把 stealth 参数面与统一 response 契约打通
 - 已完成：`scrapling_stealth_session` 支持 stealth 默认参数复用与逐请求覆盖
 - 已完成：本地 HTTP fixture + 真实 sidecar 进程的 contract test
-- 待完成：更完整的浏览器参数语义（`page_action`、真实资源拦截、stealth 指纹）
+- 已完成：`scrapling_browser_port` 在起 sidecar 前对 `cdp_url` 做最小契约校验；非法 scheme / host 返回 `invalid_cdp_url`，合法 `ws/wss` 但当前 sidecar 尚未支持时返回 `unsupported_cdp_url`
+- 已完成：`blocked_domains` 的目标 URL host 级别 exact / subdomain 拦截语义已用 contract tests 固化
+- 待完成：更完整的浏览器参数语义（`page_action`、真实子资源拦截、CDP 接管、stealth 指纹）
 
 ## Evidence
 

@@ -28,6 +28,26 @@ browser_port_wait_selector_failure_test() ->
         ok = scrapling_test_httpd:stop(Server)
     end.
 
+browser_port_invalid_cdp_url_test() ->
+    {error, Error} = scrapling_browser_port:fetch("http://example.com", #{cdp_url => "blahblah"}),
+    ?assertEqual(<<"invalid_cdp_url">>, maps:get(type, Error)).
+
+browser_port_unsupported_cdp_url_test() ->
+    {error, Error} = scrapling_browser_port:fetch("http://example.com", #{cdp_url => "ws://localhost:9222/devtools/browser/123"}),
+    ?assertEqual(<<"unsupported_cdp_url">>, maps:get(type, Error)).
+
+browser_port_blocked_domain_exact_test() ->
+    {error, Error} = scrapling_browser_port:fetch(
+                       "http://example.invalid",
+                       #{blocked_domains => ["example.invalid"]}),
+    ?assertEqual(<<"blocked_domain">>, maps:get(type, Error)).
+
+browser_port_blocked_domain_subdomain_test() ->
+    {error, Error} = scrapling_browser_port:fetch(
+                       "http://www.example.invalid",
+                       #{blocked_domains => ["example.invalid"]}),
+    ?assertEqual(<<"blocked_domain">>, maps:get(type, Error)).
+
 html_handler(_Request) ->
     {ok, Body} = file:read_file(filename:join(["apps", "scrapling", "test", "fixtures", "parser_base.html"])),
     #{status => 200,

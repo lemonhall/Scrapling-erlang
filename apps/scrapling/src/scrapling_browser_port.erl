@@ -16,20 +16,58 @@ fetch(Url) ->
     fetch(Url, #{}).
 
 fetch(Url, Opts) when is_map(Opts) ->
-    Params = fetch_params(Url, Opts),
-    case call(Params) of
-        {ok, Response} ->
-            {ok,
-             #{status_code => list_to_integer(maps:get("status_code", Response)),
-               reason_phrase => to_binary(maps:get("reason_phrase", Response, "OK")),
-               headers => decode_headers(maps:get("headers_b64", Response, "")),
-               body => decode_body(maps:get("body_b64", Response, "")),
-               url => to_binary(maps:get("url", Response, Url)),
-               method => to_binary(string:uppercase(maps:get("method", Response, "GET"))),
-               meta => response_meta(Response)}};
+    case validate_fetch_opts(Opts) of
+        ok ->
+            Params = fetch_params(Url, Opts),
+            case call(Params) of
+                {ok, Response} ->
+                    {ok,
+                     #{status_code => list_to_integer(maps:get("status_code", Response)),
+                       reason_phrase => to_binary(maps:get("reason_phrase", Response, "OK")),
+                       headers => decode_headers(maps:get("headers_b64", Response, "")),
+                       body => decode_body(maps:get("body_b64", Response, "")),
+                       url => to_binary(maps:get("url", Response, Url)),
+                       method => to_binary(string:uppercase(maps:get("method", Response, "GET"))),
+                       meta => response_meta(Response)}};
+                {error, Error} ->
+                    {error, Error}
+            end;
         {error, Error} ->
             {error, Error}
     end.
+
+validate_fetch_opts(Opts) ->
+    validate_cdp_url(maps:get(cdp_url, Opts, undefined)).
+
+validate_cdp_url(undefined) ->
+    ok;
+validate_cdp_url(CdpUrl) ->
+    Parsed = uri_string:parse(to_list(CdpUrl)),
+    case maps:get(scheme, Parsed, undefined) of
+        "ws" -> validate_cdp_host(Parsed);
+        "wss" -> validate_cdp_host(Parsed);
+        _ ->
+            {error,
+             #{type => <<"invalid_cdp_url">>,
+               message => <<"CDP URL must use 'ws://' or 'wss://' scheme">>}}
+    end.
+
+validate_cdp_host(Parsed) ->
+    case maps:get(host, Parsed, <<>>) of
+        <<>> -> invalid_cdp_hostname_error();
+        [] -> invalid_cdp_hostname_error();
+        _ -> unsupported_cdp_url_error()
+    end.
+
+invalid_cdp_hostname_error() ->
+    {error,
+     #{type => <<"invalid_cdp_url">>,
+       message => <<"Invalid hostname for the CDP URL">>}}.
+
+unsupported_cdp_url_error() ->
+    {error,
+     #{type => <<"unsupported_cdp_url">>,
+       message => <<"cdp_url is not supported by the current browser sidecar">>}}.
 
 fetch_params(Url, Opts) ->
     Base = [{"command", "fetch"},
