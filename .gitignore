@@ -9,3 +9,6 @@ rebar3.crashdump
 *.swp
 apps/*/ebin/
 apps/*/.eunit/
+
+__pycache__/
+*.pyc
