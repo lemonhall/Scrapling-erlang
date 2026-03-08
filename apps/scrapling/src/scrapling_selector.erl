@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, css/2, text/1, attribute/2]).
+-export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -39,11 +39,28 @@ attribute(Name, #xmlElement{attributes = Attributes}) when is_list(Name) ->
         [] -> undefined
     end.
 
+tag(#xmlElement{name = Name}) ->
+    atom_to_list(Name);
+tag(#xmlText{}) ->
+    "#text";
+tag(#xmlAttribute{name = Name}) ->
+    "@" ++ atom_to_list(Name).
+
+children(#xmlElement{content = Content}) ->
+    [Node || Node <- Content, is_element_node(Node)];
+children(_) ->
+    [].
+
 keep_text(#xmlText{}) ->
     true;
 keep_text(#xmlElement{}) ->
     true;
 keep_text(_) ->
+    false.
+
+is_element_node(#xmlElement{}) ->
+    true;
+is_element_node(_) ->
     false.
 
 css_to_xpath(Selector) ->

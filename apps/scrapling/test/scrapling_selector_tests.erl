@@ -26,6 +26,15 @@ css_simple_selectors_test() ->
     ?assertEqual(["Parser smoke fixture"], [scrapling_selector:text(Node) || Node <- Summary]),
     ?assertEqual(["alpha", "beta"], [scrapling_selector:text(Node) || Node <- Items]).
 
+children_navigation_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [Main] = scrapling_selector:xpath("//*[@id='app']", Doc),
+    Children = scrapling_selector:children(Main),
+    ?assertEqual(["section", "ul"], [scrapling_selector:tag(Node) || Node <- Children]),
+    ?assertEqual("hero", scrapling_selector:attribute("class", lists:nth(1, Children))),
+    ?assertEqual("items", scrapling_selector:attribute("id", lists:nth(2, Children))).
+
 read_fixture(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),
