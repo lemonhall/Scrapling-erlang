@@ -8,6 +8,7 @@
              scrapling_session_manager,
              scrapling_crawl_stats,
              scrapling_crawl_result,
+             scrapling_checkpoint,
              scrapling_crawler_engine,
              scrapling_spider,
              scrapling_browser_port,
