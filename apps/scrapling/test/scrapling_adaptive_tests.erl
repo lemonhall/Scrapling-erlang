@@ -32,6 +32,15 @@ adaptive_xpath_with_auto_save_and_relocate_test() ->
     Relocated = scrapling_selector:xpath("//section[@class='hero']/h1", Changed, #{adaptive => true, identifier => "hero_heading"}),
     ?assertEqual(["Scrapling Erlang"], [scrapling_selector:text(Node) || Node <- Relocated]).
 
+adaptive_css_with_auto_save_and_relocate_test() ->
+    ok = scrapling_storage:reset(),
+    Base = fixture_doc("parser_base.html"),
+    Changed = fixture_doc("parser_changed.html"),
+    Initial = scrapling_selector:css(".hero h1", Base, #{auto_save => true, identifier => "hero_css_heading"}),
+    ?assertEqual(["Scrapling Erlang"], [scrapling_selector:text(Node) || Node <- Initial]),
+    Relocated = scrapling_selector:css(".hero h1", Changed, #{adaptive => true, identifier => "hero_css_heading"}),
+    ?assertEqual(["Scrapling Erlang"], [scrapling_selector:text(Node) || Node <- Relocated]).
+
 fixture_doc(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),

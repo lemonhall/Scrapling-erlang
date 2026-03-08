@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, xpath/3, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2]).
+-export([from_html/1, xpath/2, xpath/3, css/2, css/3, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -42,6 +42,29 @@ css(Selector, Doc) when is_binary(Selector) ->
     css(binary_to_list(Selector), Doc);
 css(Selector, Doc) when is_list(Selector) ->
     xpath(css_to_xpath(Selector), Doc).
+
+css(Selector, Doc, Opts) when is_map(Opts) ->
+    Identifier = maps:get(identifier, Opts, Selector),
+    AutoSave = maps:get(auto_save, Opts, false),
+    Adaptive = maps:get(adaptive, Opts, false),
+    case css(Selector, Doc) of
+        [First | _] = Matches ->
+            maybe_save(AutoSave, Identifier, First),
+            Matches;
+        [] when Adaptive =:= true ->
+            case retrieve(Identifier) of
+                undefined -> [];
+                Saved ->
+                    Relocated = relocate(Doc, Saved),
+                    case {AutoSave, Relocated} of
+                        {true, [First | _]} -> maybe_save(true, Identifier, First);
+                        _ -> ok
+                    end,
+                    Relocated
+            end;
+        [] ->
+            []
+    end.
 
 text(#xmlText{value = Value}) ->
     string:trim(Value);
