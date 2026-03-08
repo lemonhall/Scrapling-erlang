@@ -55,7 +55,7 @@
 | REQ-0001-003 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_adaptive_tests` | 当前证据：手工 `save/retrieve/relocate` 与 `XPath adaptive/auto_save` slice 已通过 | doing |
 | REQ-0001-004 | `v1-fetchers-static` | `rebar3 eunit -m scrapling_fetcher_tests`；`rebar3 eunit -m scrapling_fetcher_e2e_tests` | 当前证据：静态 GET/POST/PUT/DELETE、统一 Response、本地 HTTP fixture server 已通过 | done |
 | REQ-0001-005 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_browser_contract_tests`；`rebar3 eunit -m scrapling_dynamic_fetcher_tests`；`rebar3 eunit -m scrapling_dynamic_session_tests` | 当前证据：Port sidecar 契约、最小 dynamic fetcher、dynamic session 默认参数复用、本地 sidecar E2E 已通过；更完整浏览器行为待继续扩充 | doing |
-| REQ-0001-006 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_stealth_fetcher_tests` | 当前证据：最小 `StealthFetcher` 包装层与 response 契约已通过；真实 stealth 指纹与会话待继续扩充 | doing |
+| REQ-0001-006 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_stealth_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_session_tests` | 当前证据：`StealthFetcher`/`StealthSession` 最小包装层与 response 契约已通过；真实 stealth 指纹待继续扩充 | doing |
 | REQ-0001-007 | `v1-fetchers-static` / `v1-fetchers-browser` | `rebar3 eunit -m scrapling_session_tests` | 当前证据：静态 session 的 cookies / headers / proxy rotation 已通过；浏览器侧待 M4 | doing |
 | REQ-0001-008 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-009 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_e2e_tests` | checkpoint 与日志产物 | todo |
