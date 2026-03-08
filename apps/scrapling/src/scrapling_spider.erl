@@ -10,7 +10,8 @@ start(SpiderModule, Opts) when is_map(Opts) ->
     SessionManager0 = maps:get(session_manager, Opts, scrapling_session_manager:new()),
     SessionManager1 = maybe_configure_sessions(SpiderModule, SessionManager0),
     CheckpointData = maybe_load_checkpoint(Opts),
-    Result = scrapling_crawler_engine:crawl(SpiderModule, SessionManager1, checkpoint_opts(CheckpointData)),
+    EngineOpts = maps:merge(runtime_opts(Opts), checkpoint_opts(CheckpointData)),
+    Result = scrapling_crawler_engine:crawl(SpiderModule, SessionManager1, EngineOpts),
     maybe_cleanup_checkpoint(Opts, Result),
     Result.
 
@@ -45,6 +46,9 @@ checkpoint_opts(undefined) ->
     #{};
 checkpoint_opts(CheckpointData) ->
     #{checkpoint_data => CheckpointData}.
+
+runtime_opts(Opts) ->
+    maps:with([checkpoint_manager, pause_after_requests], Opts).
 
 maybe_cleanup_checkpoint(Opts, Result) ->
     case {maps:get(checkpoint_manager, Opts, undefined), scrapling_crawl_result:completed(Result)} of

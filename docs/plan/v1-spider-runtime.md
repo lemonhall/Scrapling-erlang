@@ -95,7 +95,9 @@
 - 已完成：`scrapling_checkpoint_tests` 固化请求与 seen 的持久化回环
 - 已完成：resume 路径已接入 `scrapling_spider:start/2`，可从已有 checkpoint 恢复 pending requests 并在成功完成后清理 checkpoint 文件
 - 已完成：`scrapling_spider_e2e_tests` 首轮覆盖 checkpoint restore -> crawl completion 闭环
-- 待完成：真正的 pause 触发、stream 模式、blocked retry
+- 已完成：程序化 `pause_after_requests` 触发已接入 engine，可在 crawl 中途保存 pending requests 到 checkpoint 并返回未完成结果
+- 已完成：`scrapling_spider_e2e_tests` 已覆盖 pause -> checkpoint 与 checkpoint -> resume 两条 E2E 主路径
+- 待完成：更接近源仓的外部 pause 信号入口、stream 模式、blocked retry
 
 ## Evidence
 
