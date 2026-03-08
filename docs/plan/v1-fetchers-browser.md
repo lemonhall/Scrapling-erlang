@@ -83,6 +83,7 @@
 - 已完成：`scrapling_dynamic_session` 支持默认参数复用与逐请求覆盖
 - 已完成：`scrapling_stealth_fetcher` 最小包装层，先把 stealth 参数面与统一 response 契约打通
 - 已完成：`scrapling_stealth_session` 支持 stealth 默认参数复用与逐请求覆盖
+- 已完成：browser session 对坏请求做错误隔离，遇到浏览器抓取错误时返回结构化 `{error, Error}`，不会把 session 进程本身打崩
 - 已完成：本地 HTTP fixture + 真实 sidecar 进程的 contract test
 - 已完成：`scrapling_browser_port` 在起 sidecar 前对 `cdp_url` 做最小契约校验；非法 scheme / host 返回 `invalid_cdp_url`，合法 `ws/wss` 但当前 sidecar 尚未支持时返回 `unsupported_cdp_url`
 - 已完成：`wait_selector_state` 最小语义已打通，支持 `attached` / `visible` / `hidden` / `detached` 四种状态，并对非法枚举返回 `invalid_wait_selector_state`

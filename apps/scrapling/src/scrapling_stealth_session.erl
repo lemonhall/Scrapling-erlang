@@ -27,8 +27,13 @@ handle_call(stop, _From, State) ->
     {stop, normal, ok, State};
 handle_call({fetch, Url, Opts}, _From, State) ->
     Defaults = maps:get(defaults, State, #{}),
-    Response = scrapling_stealth_fetcher:fetch(Url, maps:merge(Defaults, Opts)),
-    {reply, Response, State}.
+    try scrapling_stealth_fetcher:fetch(Url, maps:merge(Defaults, Opts)) of
+        Response ->
+            {reply, Response, State}
+    catch
+        error:{stealth_fetch_failed, Error} ->
+            {reply, {error, Error}, State}
+    end.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.

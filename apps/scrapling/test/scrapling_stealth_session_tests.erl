@@ -27,6 +27,24 @@ stealth_session_request_override_test() ->
         ok = scrapling_test_httpd:stop(Server)
     end.
 
+stealth_session_fetch_error_does_not_kill_session_test() ->
+    OldTrapExit = process_flag(trap_exit, true),
+    {ok, Server, BaseUrl} = scrapling_test_httpd:start_link(fun html_handler/1),
+    {ok, Session} = scrapling_stealth_session:start_link(#{wait_selector => "h1", block_webrtc => true}),
+    try
+        Error = scrapling_stealth_session:fetch(Session, "http://example.com", #{cdp_url => "blahblah"}),
+        ?assertMatch({error, #{type := <<"invalid_cdp_url">>}}, Error),
+        ?assert(is_process_alive(Session)),
+
+        Response = scrapling_stealth_session:fetch(Session, BaseUrl ++ "/"),
+        ?assertEqual(200, scrapling_response:status_code(Response)),
+        ?assertEqual(true, maps:get(stealth, scrapling_response:meta(Response)))
+    after
+        ok = scrapling_stealth_session:stop(Session),
+        ok = scrapling_test_httpd:stop(Server),
+        process_flag(trap_exit, OldTrapExit)
+    end.
+
 html_handler(_Request) ->
     {ok, Body} = file:read_file(filename:join(["apps", "scrapling", "test", "fixtures", "parser_base.html"])),
     #{status => 200,

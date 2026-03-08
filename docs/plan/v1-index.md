@@ -55,13 +55,13 @@
 | REQ-0001-003 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_adaptive_tests` | 当前证据：手工 `save/retrieve/relocate` 与 `XPath adaptive/auto_save` slice 已通过 | doing |
 | REQ-0001-004 | `v1-fetchers-static` | `rebar3 eunit -m scrapling_fetcher_tests`；`rebar3 eunit -m scrapling_fetcher_e2e_tests` | 当前证据：静态 GET/POST/PUT/DELETE、统一 Response、本地 HTTP fixture server 已通过 | done |
 | REQ-0001-005 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_browser_contract_tests`；`rebar3 eunit -m scrapling_dynamic_fetcher_tests`；`rebar3 eunit -m scrapling_dynamic_session_tests` | 当前证据：Port sidecar 契约、最小 dynamic fetcher、dynamic session 默认参数复用、本地 sidecar E2E 已通过；`cdp_url` 非法/未支持错误、`wait_selector_state` 四态语义与 `blocked_domains` exact/subdomain 目标域拦截已固化 | doing |
-| REQ-0001-006 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_stealth_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_session_tests` | 当前证据：`StealthFetcher`/`StealthSession` 最小包装层、stealth meta 契约与浏览器错误传播已通过；真实 stealth 指纹待继续扩充 | doing |
-| REQ-0001-007 | `v1-fetchers-static` / `v1-fetchers-browser` | `rebar3 eunit -m scrapling_session_tests` | 当前证据：静态 session 的 cookies / headers / proxy rotation 已通过；浏览器侧待 M4 | doing |
+| REQ-0001-006 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_stealth_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_session_tests` | 当前证据：`StealthFetcher`/`StealthSession` 最小包装层、stealth meta 契约、浏览器错误传播与 session 错误隔离已通过；真实 stealth 指纹待继续扩充 | doing |
+| REQ-0001-007 | `v1-fetchers-static` / `v1-fetchers-browser` | `rebar3 eunit -m scrapling_session_tests` | 当前证据：静态 session 的 cookies / headers / proxy rotation 已通过；浏览器 session 坏请求不会打崩进程，后续请求仍可继续 | doing |
 | REQ-0001-008 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-009 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_e2e_tests` | checkpoint 与日志产物 | todo |
 | REQ-0001-010 | `v1-cli-ai-docs` | `rebar3 eunit -m scrapling_cli_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-011 | `v1-cli-ai-docs` | `rebar3 eunit -m scrapling_mcp_tests` | `_build/test/logs/...` | todo |
-| REQ-0001-012 | `v1-repo-bootstrap` / `v1-cli-ai-docs` | `rebar3 eunit` | 当前证据：当前全量 `eunit` 共 `45` 条测试通过；最终全仓门禁待继续扩充 | doing |
+| REQ-0001-012 | `v1-repo-bootstrap` / `v1-cli-ai-docs` | `rebar3 eunit` | 当前证据：当前全量 `eunit` 共 `47` 条测试通过；最终全仓门禁待继续扩充 | doing |
 
 ## ECN 索引
 
