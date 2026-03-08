@@ -35,6 +35,30 @@ children_navigation_test() ->
     ?assertEqual("hero", scrapling_selector:attribute("class", lists:nth(1, Children))),
     ?assertEqual("items", scrapling_selector:attribute("id", lists:nth(2, Children))).
 
+parent_and_sibling_navigation_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [Hero] = scrapling_selector:css(".hero", Doc),
+    Parent = scrapling_selector:parent(Hero),
+    Siblings = scrapling_selector:siblings(Hero),
+    ?assertEqual("main", scrapling_selector:tag(Parent)),
+    ?assertEqual(["ul"], [scrapling_selector:tag(Node) || Node <- Siblings]),
+    ?assertEqual("items", scrapling_selector:attribute("id", lists:nth(1, Siblings))).
+
+next_previous_navigation_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [First, Second] = scrapling_selector:css("#items li", Doc),
+    ?assertEqual("2", scrapling_selector:attribute("data-id", scrapling_selector:next(First))),
+    ?assertEqual("1", scrapling_selector:attribute("data-id", scrapling_selector:previous(Second))).
+
+find_ancestor_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [Link] = scrapling_selector:css("a", Doc),
+    Main = scrapling_selector:find_ancestor(Link, fun(Node) -> scrapling_selector:attribute("id", Node) =:= "app" end),
+    ?assertEqual("main", scrapling_selector:tag(Main)).
+
 selector_regex_test() ->
     Html = read_fixture("parser_base.html"),
     Doc = scrapling_selector:from_html(Html),

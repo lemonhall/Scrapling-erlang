@@ -7,8 +7,8 @@
 ## Status
 
 - 状态：doing
-- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`re/2`、`re_first/2`、`get/1`、`getall/1`、`find_all/2`、`find/2`、CSS `::text` / `::attr()`、手工 `save/retrieve/relocate`、`XPath/CSS adaptive/auto_save`、`Selectors.search/2` 与 `Selectors.filter/2` 已落地
-- 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit`
+- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`parent/1`、`siblings/1`、`next/1`、`previous/1`、`find_ancestor/2`、`re/2`、`re_first/2`、`get/1`、`getall/1`、`find_all/2`、`find/2`、CSS `::text` / `::attr()`、手工 `save/retrieve/relocate`、`XPath/CSS adaptive/auto_save`、`Selectors.search/2` 与 `Selectors.filter/2` 已落地
+- 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit -m scrapling_adaptive_tests`、`rebar3 eunit`
 
 ## PRD Trace
 
@@ -79,3 +79,10 @@
 - CSS / XPath 支持的库选型会影响后续 API 语义稳定性
 - adaptive 匹配如果没有稳定的数据契约，后面 fetcher / spider 接口会返工
 - JSON / 文本处理要提早统一编码策略
+
+## Incremental Evidence
+
+- 已完成：为 selector 查询结果引入轻量“节点 + 根文档”包装，补上导航所需的上下文
+- 已完成：本地 fixture 上验证 `parent/siblings/next/previous/find_ancestor`
+- 已验证：`rebar3 eunit -m scrapling_selector_tests`
+- 已验证：`rebar3 eunit`

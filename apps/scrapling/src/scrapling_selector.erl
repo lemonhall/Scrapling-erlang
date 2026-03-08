@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, xpath/3, css/2, css/3, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2, find_all/2, find/2]).
+-export([from_html/1, xpath/2, xpath/3, css/2, css/3, text/1, attribute/2, tag/1, children/1, parent/1, siblings/1, next/1, previous/1, find_ancestor/2, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2, find_all/2, find/2]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -11,7 +11,8 @@ from_html(Html) when is_list(Html) ->
     Doc.
 
 xpath(Query, Doc) when is_list(Query) ->
-    xmerl_xpath:string(Query, Doc);
+    Root = root_context(Doc),
+    wrap_results(xmerl_xpath:string(Query, unwrap(Doc)), Root);
 xpath(Query, Doc) when is_binary(Query) ->
     xpath(binary_to_list(Query), Doc).
 
@@ -66,6 +67,8 @@ css(Selector, Doc, Opts) when is_map(Opts) ->
             []
     end.
 
+text(#{node := Node}) ->
+    text(Node);
 text(#xmlText{value = Value}) ->
     string:trim(Value);
 text(#xmlAttribute{value = Value}) ->
@@ -77,6 +80,8 @@ text(Value) when is_list(Value) ->
 text(Value) when is_binary(Value) ->
     string:trim(binary_to_list(Value)).
 
+attribute(Name, #{node := Node}) ->
+    attribute(Name, Node);
 attribute(Name, #xmlElement{attributes = Attributes}) when is_binary(Name) ->
     attribute(binary_to_list(Name), #xmlElement{attributes = Attributes});
 attribute(Name, #xmlElement{attributes = Attributes}) when is_list(Name) ->
@@ -85,6 +90,8 @@ attribute(Name, #xmlElement{attributes = Attributes}) when is_list(Name) ->
         [] -> undefined
     end.
 
+tag(#{node := Node}) ->
+    tag(Node);
 tag(#xmlElement{name = Name}) ->
     atom_to_list(Name);
 tag(#xmlText{}) ->
@@ -92,10 +99,47 @@ tag(#xmlText{}) ->
 tag(#xmlAttribute{name = Name}) ->
     "@" ++ atom_to_list(Name).
 
+children(#{root := Root, node := #xmlElement{content = Content}}) ->
+    [wrap_node(Node, Root) || Node <- Content, is_element_node(Node)];
 children(#xmlElement{content = Content}) ->
     [Node || Node <- Content, is_element_node(Node)];
 children(_) ->
     [].
+
+parent(#{root := Root, node := Node}) ->
+    wrap_or_undefined(parent_raw(Node, Root), Root);
+parent(_) ->
+    undefined.
+
+siblings(Node) ->
+    case parent(Node) of
+        undefined -> [];
+        Parent -> [Sibling || Sibling <- children(Parent), not same_node(Sibling, Node)]
+    end.
+
+next(Node) ->
+    case parent(Node) of
+        undefined -> undefined;
+        Parent -> next_sibling(children(Parent), Node)
+    end.
+
+previous(Node) ->
+    case parent(Node) of
+        undefined -> undefined;
+        Parent -> previous_sibling(children(Parent), Node)
+    end.
+
+find_ancestor(Node, Predicate) when is_function(Predicate, 1) ->
+    case parent(Node) of
+        undefined -> undefined;
+        Ancestor ->
+            case Predicate(Ancestor) of
+                true -> Ancestor;
+                false -> find_ancestor(Ancestor, Predicate)
+            end
+    end;
+find_ancestor(Node, Query) when is_map(Query) ->
+    find_ancestor(Node, fun(Ancestor) -> matches_query(Ancestor, Query) end).
 
 re(Pattern, Node) ->
     case re:run(text(Node), Pattern, [global, {capture, first, list}]) of
@@ -109,6 +153,8 @@ re_first(Pattern, Node) ->
         nomatch -> undefined
     end.
 
+get(#{node := Node}) ->
+    ?MODULE:get(Node);
 get(Node = #xmlElement{}) ->
     lists:flatten(xmerl:export_simple_content([Node], xmerl_html));
 get(Node = #xmlText{}) ->
@@ -126,20 +172,22 @@ retrieve(Identifier) ->
     scrapling_storage:retrieve(Identifier).
 
 relocate(Doc, SavedElement) ->
-    Candidates = all_elements(Doc),
+    Root = root_context(Doc),
+    Candidates = all_elements(unwrap(Doc)),
     Scored = [{similarity_score(SavedElement, Candidate), Candidate} || Candidate <- Candidates],
     case Scored of
         [] -> [];
         _ ->
             Highest = lists:max([Score || {Score, _} <- Scored]),
             case Highest > 0 of
-                true -> [Candidate || {Score, Candidate} <- Scored, Score =:= Highest];
+                true -> [wrap_node(Candidate, Root) || {Score, Candidate} <- Scored, Score =:= Highest];
                 false -> []
             end
     end.
 
 find_all(Doc, Query) when is_map(Query) ->
-    [Node || Node <- all_elements(Doc), matches_query(Node, Query)].
+    Root = root_context(Doc),
+    [wrap_node(Node, Root) || Node <- all_elements(unwrap(Doc)), matches_query(Node, Query)].
 
 find(Doc, Query) when is_map(Query) ->
     case find_all(Doc, Query) of
@@ -164,6 +212,8 @@ all_elements(Node = #xmlElement{}) ->
 all_elements(_) ->
     [].
 
+element_to_map(#{node := Node}) ->
+    element_to_map(Node);
 element_to_map(Node = #xmlElement{attributes = Attributes, parents = Parents}) ->
     #{tag => tag(Node),
       attributes => maps:from_list([{atom_to_list(Attr#xmlAttribute.name), Attr#xmlAttribute.value} || Attr <- Attributes]),
@@ -257,6 +307,77 @@ maybe_save(true, Identifier, Node) ->
     save(Node, Identifier);
 maybe_save(false, _Identifier, _Node) ->
     ok.
+
+wrap_results(Results, Root) ->
+    [wrap_node(Result, Root) || Result <- Results].
+
+wrap_node(Node = #xmlElement{}, Root) ->
+    #{root => unwrap(Root), node => Node};
+wrap_node(Node = #xmlText{}, Root) ->
+    #{root => unwrap(Root), node => Node};
+wrap_node(Node = #xmlAttribute{}, Root) ->
+    #{root => unwrap(Root), node => Node};
+wrap_node(Value, _Root) ->
+    Value.
+
+wrap_or_undefined(undefined, _Root) ->
+    undefined;
+wrap_or_undefined(Node, Root) ->
+    wrap_node(Node, Root).
+
+unwrap(#{node := Node}) ->
+    Node;
+unwrap(Node) ->
+    Node.
+
+root_context(#{root := Root}) ->
+    Root;
+root_context(Root) ->
+    Root.
+
+parent_raw(#xmlElement{parents = [{ParentName, ParentPos} | Ancestors]}, Root) ->
+    find_element_by_locator(ParentName, ParentPos, Ancestors, Root);
+parent_raw(#xmlText{parents = [{ParentName, ParentPos} | Ancestors]}, Root) ->
+    find_element_by_locator(ParentName, ParentPos, Ancestors, Root);
+parent_raw(#xmlAttribute{parents = [{ParentName, ParentPos} | Ancestors]}, Root) ->
+    find_element_by_locator(ParentName, ParentPos, Ancestors, Root);
+parent_raw(_, _Root) ->
+    undefined.
+
+find_element_by_locator(Name, Pos, Parents, Root) ->
+    first_or_undefined([
+        Node || Node = #xmlElement{name = CandidateName, pos = CandidatePos, parents = CandidateParents} <- all_elements(unwrap(Root)),
+                CandidateName =:= Name,
+                CandidatePos =:= Pos,
+                CandidateParents =:= Parents
+    ]).
+
+same_node(Left, Right) ->
+    unwrap(Left) =:= unwrap(Right).
+
+next_sibling([], _Node) ->
+    undefined;
+next_sibling([Current | Rest], Node) ->
+    case same_node(Current, Node) of
+        true -> first_or_undefined(Rest);
+        false -> next_sibling(Rest, Node)
+    end.
+
+previous_sibling(Nodes, Node) ->
+    previous_sibling(Nodes, Node, undefined).
+
+previous_sibling([], _Node, Previous) ->
+    Previous;
+previous_sibling([Current | Rest], Node, Previous) ->
+    case same_node(Current, Node) of
+        true -> Previous;
+        false -> previous_sibling(Rest, Node, Current)
+    end.
+
+first_or_undefined([First | _]) ->
+    First;
+first_or_undefined([]) ->
+    undefined.
 
 matches_query(Node, Query) ->
     tag_matches(Node, maps:get(tag, Query, undefined)) andalso
