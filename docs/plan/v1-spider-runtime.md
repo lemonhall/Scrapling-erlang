@@ -99,8 +99,9 @@
 - 已完成：`scrapling_spider_e2e_tests` 已覆盖 pause -> checkpoint 与 checkpoint -> resume 两条 E2E 主路径
 - 已完成：`scrapling_spider:stream/2`、`next/2`、`stats/1` 已接入，支持逐项吐出 item，并在流式消费期间读取运行中 stats
 - 已完成：`scrapling_crawler_engine` 已抽出 `on_item` / `on_stats` hook，供流式消费复用同一套 crawl 闭环
-- 已完成：`scrapling_spider_e2e_tests` 已覆盖 stream item-by-item + live stats 主路径
-- 待完成：更接近源仓的外部 pause 信号入口、blocked retry
+- 已完成：blocked response 检测、`retry_count` 累加、`dont_filter` 强制、priority 降级、proxy 清理与 `retry_blocked_request/2` hook 已接入 engine 主循环
+- 已完成：`scrapling_spider_e2e_tests` 已覆盖 stream item-by-item + live stats，以及 blocked retry recover/exhaust 主路径
+- 待完成：更接近源仓的外部 pause 信号入口
 
 ## Evidence
 

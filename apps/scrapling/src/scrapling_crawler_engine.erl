@@ -23,13 +23,13 @@ loop(SpiderModule, SessionManager0, Scheduler0, Items0, Stats0, AllowedDomains, 
                         {ok, Response, SessionManager1} ->
                             Stats1 = scrapling_crawl_stats:inc_requests(Stats0),
                             notify_stats(Stats1, Opts),
-                            Results = callback_results(SpiderModule, Request, Response),
-                            {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1, Opts),
-                            case maybe_pause(Scheduler2, Items1, Stats2, Opts) of
-                                continue ->
-                                    loop(SpiderModule, SessionManager1, Scheduler2, Items1, Stats2, AllowedDomains, Opts);
-                                {paused, Result} ->
-                                    Result
+                            case maybe_handle_blocked_response(SpiderModule, Request, Response, Scheduler1, Stats1, Opts) of
+                                not_blocked ->
+                                    Results = callback_results(SpiderModule, Request, Response),
+                                    {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1, Opts),
+                                    continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items1, Stats2, AllowedDomains, Opts);
+                                {blocked, Scheduler2, Stats2} ->
+                                    continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items0, Stats2, AllowedDomains, Opts)
                             end;
                         {error, _Error, SessionManager1} ->
                             Stats1 = scrapling_crawl_stats:inc_failed(Stats0),
@@ -37,6 +37,14 @@ loop(SpiderModule, SessionManager0, Scheduler0, Items0, Stats0, AllowedDomains, 
                             loop(SpiderModule, SessionManager1, Scheduler1, Items0, Stats1, AllowedDomains, Opts)
                     end
             end
+    end.
+
+continue_or_pause(SpiderModule, SessionManager, Scheduler, Items, Stats, AllowedDomains, Opts) ->
+    case maybe_pause(Scheduler, Items, Stats, Opts) of
+        continue ->
+            loop(SpiderModule, SessionManager, Scheduler, Items, Stats, AllowedDomains, Opts);
+        {paused, Result} ->
+            Result
     end.
 
 start_requests(SpiderModule) ->
@@ -63,6 +71,57 @@ is_domain_allowed(Request, AllowedDomains) ->
     Domain = scrapling_request:domain(Request),
     lists:any(fun(Allowed) -> Domain =:= Allowed orelse lists:suffix(binary_to_list(<<".", Allowed/binary>>), binary_to_list(Domain)) end,
               AllowedDomains).
+
+maybe_handle_blocked_response(SpiderModule, Request, Response, Scheduler, Stats0, Opts) ->
+    case is_blocked(SpiderModule, Response) of
+        false ->
+            not_blocked;
+        true ->
+            Stats1 = scrapling_crawl_stats:inc_blocked(Stats0),
+            notify_stats(Stats1, Opts),
+            case maps:get(retry_count, Request, 0) < max_blocked_retries(SpiderModule) of
+                true ->
+                    RetryRequest0 = prepare_retry_request(Request),
+                    RetryRequest1 = retry_blocked_request(SpiderModule, RetryRequest0, Response),
+                    {_Accepted, Scheduler1} = scrapling_scheduler:enqueue(RetryRequest1, Scheduler),
+                    {blocked, Scheduler1, Stats1};
+                false ->
+                    {blocked, Scheduler, Stats1}
+            end
+    end.
+
+is_blocked(SpiderModule, Response) ->
+    ensure_loaded(SpiderModule),
+    case erlang:function_exported(SpiderModule, is_blocked, 1) of
+        true -> SpiderModule:is_blocked(Response);
+        false -> lists:member(scrapling_response:status_code(Response), blocked_status_codes())
+    end.
+
+max_blocked_retries(SpiderModule) ->
+    ensure_loaded(SpiderModule),
+    case erlang:function_exported(SpiderModule, max_blocked_retries, 0) of
+        true -> SpiderModule:max_blocked_retries();
+        false -> 3
+    end.
+
+retry_blocked_request(SpiderModule, Request, Response) ->
+    ensure_loaded(SpiderModule),
+    case erlang:function_exported(SpiderModule, retry_blocked_request, 2) of
+        true -> SpiderModule:retry_blocked_request(Request, Response);
+        false -> Request
+    end.
+
+prepare_retry_request(Request) ->
+    RetryRequest0 = scrapling_request:copy(Request),
+    RetryCount = maps:get(retry_count, Request, 0) + 1,
+    SessionOpts1 = maps:remove(proxy, maps:remove(proxies, scrapling_request:session_opts(RetryRequest0))),
+    RetryRequest0#{priority => scrapling_request:priority(Request) - 1,
+                   dont_filter => true,
+                   retry_count => RetryCount,
+                   session_opts => SessionOpts1}.
+
+blocked_status_codes() ->
+    [401, 403, 407, 429, 444, 500, 502, 503, 504].
 
 callback_results(SpiderModule, Request, Response) ->
     case scrapling_request:callback(Request) of
