@@ -11,32 +11,37 @@ crawl(SpiderModule, SessionManager, Opts) when is_map(Opts) ->
     loop(SpiderModule, SessionManager, Scheduler0, [], scrapling_crawl_stats:new(), AllowedDomains, Opts).
 
 loop(SpiderModule, SessionManager0, Scheduler0, Items0, Stats0, AllowedDomains, Opts) ->
-    case scrapling_scheduler:dequeue(Scheduler0) of
-        {empty, _Scheduler} ->
-            scrapling_crawl_result:new(lists:reverse(Items0), Stats0, true);
-        {ok, Request, Scheduler1} ->
-            case is_domain_allowed(Request, AllowedDomains) of
-                false ->
-                    loop(SpiderModule, SessionManager0, Scheduler1, Items0, Stats0, AllowedDomains, Opts);
-                true ->
-                    case scrapling_session_manager:fetch(Request, SessionManager0) of
-                        {ok, Response, SessionManager1} ->
-                            Stats1 = scrapling_crawl_stats:inc_requests(Stats0),
-                            notify_stats(Stats1, Opts),
-                            case maybe_handle_blocked_response(SpiderModule, Request, Response, Scheduler1, Stats1, Opts) of
-                                not_blocked ->
-                                    Results = callback_results(SpiderModule, Request, Response),
-                                    {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1, Opts),
-                                    continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items1, Stats2, AllowedDomains, Opts);
-                                {blocked, Scheduler2, Stats2} ->
-                                    continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items0, Stats2, AllowedDomains, Opts)
-                            end;
-                        {error, _Error, SessionManager1} ->
-                            Stats1 = scrapling_crawl_stats:inc_failed(Stats0),
-                            notify_stats(Stats1, Opts),
-                            loop(SpiderModule, SessionManager1, Scheduler1, Items0, Stats1, AllowedDomains, Opts)
+    case maybe_pause(Scheduler0, Items0, Stats0, Opts) of
+        continue ->
+            case scrapling_scheduler:dequeue(Scheduler0) of
+                {empty, _Scheduler} ->
+                    scrapling_crawl_result:new(lists:reverse(Items0), Stats0, true);
+                {ok, Request, Scheduler1} ->
+                    case is_domain_allowed(Request, AllowedDomains) of
+                        false ->
+                            loop(SpiderModule, SessionManager0, Scheduler1, Items0, Stats0, AllowedDomains, Opts);
+                        true ->
+                            case scrapling_session_manager:fetch(Request, SessionManager0) of
+                                {ok, Response, SessionManager1} ->
+                                    Stats1 = scrapling_crawl_stats:inc_requests(Stats0),
+                                    notify_stats(Stats1, Opts),
+                                    case maybe_handle_blocked_response(SpiderModule, Request, Response, Scheduler1, Stats1, Opts) of
+                                        not_blocked ->
+                                            Results = callback_results(SpiderModule, Request, Response),
+                                            {Scheduler2, Items1, Stats2} = consume_results(Results, Scheduler1, Items0, Stats1, Opts),
+                                            continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items1, Stats2, AllowedDomains, Opts);
+                                        {blocked, Scheduler2, Stats2} ->
+                                            continue_or_pause(SpiderModule, SessionManager1, Scheduler2, Items0, Stats2, AllowedDomains, Opts)
+                                    end;
+                                {error, _Error, SessionManager1} ->
+                                    Stats1 = scrapling_crawl_stats:inc_failed(Stats0),
+                                    notify_stats(Stats1, Opts),
+                                    loop(SpiderModule, SessionManager1, Scheduler1, Items0, Stats1, AllowedDomains, Opts)
+                            end
                     end
-            end
+            end;
+        {paused, Result} ->
+            Result
     end.
 
 continue_or_pause(SpiderModule, SessionManager, Scheduler, Items, Stats, AllowedDomains, Opts) ->
@@ -167,15 +172,41 @@ initial_scheduler(SpiderModule, Opts) ->
     end.
 
 maybe_pause(Scheduler, Items, Stats, Opts) ->
+    case should_pause(Stats, Opts) of
+        true ->
+            pause_result(Scheduler, Items, Stats, Opts);
+        false ->
+            continue
+    end.
+
+should_pause(Stats, Opts) ->
+    pause_after_requests_requested(Stats, Opts) orelse external_pause_requested().
+
+pause_after_requests_requested(Stats, Opts) ->
     RequestsCount = scrapling_crawl_stats:requests_count(Stats),
     case maps:get(pause_after_requests, Opts, undefined) of
-        undefined ->
-            continue;
-        Limit when is_integer(Limit), Limit > 0, RequestsCount >= Limit ->
+        Limit when is_integer(Limit), Limit > 0 -> RequestsCount >= Limit;
+        _ -> false
+    end.
+
+external_pause_requested() ->
+    consume_pause_requests(0) > 0.
+
+consume_pause_requests(Count) ->
+    receive
+        {scrapling_pause, request} ->
+            consume_pause_requests(Count + 1)
+    after 0 ->
+        Count
+    end.
+
+pause_result(Scheduler, Items, Stats, Opts) ->
+    case maps:get(checkpoint_manager, Opts, undefined) of
+        CheckpointManager when is_map(CheckpointManager) ->
             maybe_save_checkpoint(Scheduler, Opts),
             {paused, scrapling_crawl_result:new(lists:reverse(Items), Stats, false)};
         _ ->
-            continue
+            {paused, scrapling_crawl_result:new(lists:reverse(Items), Stats, true)}
     end.
 
 maybe_save_checkpoint(Scheduler, Opts) ->

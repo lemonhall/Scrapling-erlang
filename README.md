@@ -8,9 +8,9 @@
 
 - 源项目基线：本机 `E:\development\Scrapling`
 - 源项目版本快照：`scrapling/__init__.py` 显示 `0.4.1`
-- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session、本地 HTTP fixture server、`cdp_url` 最小契约校验、`wait_selector_state` 四态语义、browser session 错误隔离、`blocked_domains` 目标域拦截契约，以及 spider `Request` / `Scheduler` / `SessionManager` / `CrawlerEngine` / `Spider` / `Checkpoint` / `pause` / `resume` / `stream` / `blocked retry` 最小闭环，与 `66` 条 eunit 测试闭环
+- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session、本地 HTTP fixture server、`cdp_url` 最小契约校验、`wait_selector_state` 四态语义、browser session 错误隔离、`blocked_domains` 目标域拦截契约，以及 spider `Request` / `Scheduler` / `SessionManager` / `CrawlerEngine` / `Spider` / `Checkpoint` / `pause` / `resume` / `stream` / `blocked retry` / 外部 `pause` 信号最小闭环，与 `68` 条 eunit 测试闭环
 - 默认目标：让 **Erlang / BEAM 社区** 获得与源项目等价的解析、抓取、蜘蛛、CLI、AI/MCP 能力
-- 最新 Spider slice：已补齐 blocked response 检测、retry request 重排与重入 scheduler，并保留 `stream` 的逐项消费与实时 stats
+- 最新 Spider slice：已补齐 `run/2`、`pause/1`、`await/2` 外部控制入口，并对齐“有 checkpoint 则 paused，无 checkpoint 则优雅停止”的语义
 
 ## 文档入口
 
@@ -35,8 +35,8 @@
 
 ## 下一步
 
-当前阶段已经完成文档矩阵、bootstrap、静态抓取、浏览器抓取的多轮收口，并已进入 M5 Spider runtime：
+当前阶段已经完成文档矩阵、bootstrap、静态抓取，以及 Spider runtime 的 pause / resume / checkpoint / stream / blocked retry 主链路，接下来优先回到浏览器能力面：
 
-1. 继续 `docs/plan/v1-spider-runtime.md`，补更接近源仓的外部 pause 信号入口
-2. 回到 `docs/plan/v1-fetchers-browser.md`，继续补 `page_action`、子资源拦截与真实 `cdp_url` 接管
+1. 继续 `docs/plan/v1-fetchers-browser.md`，补 `page_action`、子资源拦截与真实 `cdp_url` 接管
+2. 继续提升 Spider runtime 的更高阶 parity（如更完整并发/导出/观测口径）
 3. 持续更新 `docs/plan/v1-index.md` 的追溯矩阵、证据与里程碑状态
