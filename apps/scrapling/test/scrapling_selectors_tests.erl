@@ -32,6 +32,14 @@ selectors_serialization_test() ->
     ?assertEqual("<li data-id=\"1\">alpha</li>", scrapling_selectors:get(Items)),
     ?assertEqual(["<li data-id=\"1\">alpha</li>", "<li data-id=\"2\">beta</li>"], scrapling_selectors:getall(Items)).
 
+selectors_search_and_filter_test() ->
+    Doc = fixture_doc(),
+    Items = scrapling_selectors:from_nodes(scrapling_selector:xpath("//*[@id='items']/li", Doc)),
+    SearchFun = fun(Node) -> scrapling_selector:text(Node) =:= "beta" end,
+    FilterFun = fun(Node) -> scrapling_selector:re_first("a$", Node) =/= undefined end,
+    ?assertEqual("beta", scrapling_selector:text(scrapling_selectors:search(Items, SearchFun))),
+    ?assertEqual(["alpha", "beta"], [scrapling_selector:text(Node) || Node <- scrapling_selectors:to_list(scrapling_selectors:filter(Items, FilterFun))]).
+
 fixture_doc() ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", "parser_base.html"]),
     {ok, Html} = file:read_file(Path),

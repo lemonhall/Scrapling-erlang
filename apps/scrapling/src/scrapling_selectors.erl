@@ -2,7 +2,7 @@
 
 -compile({no_auto_import, [length/1]}).
 
--export([from_nodes/1, to_list/1, length/1, first/1, last/1, get/1, getall/1, xpath/2, css/2, re/2, re_first/2]).
+-export([from_nodes/1, to_list/1, length/1, first/1, last/1, get/1, getall/1, xpath/2, css/2, re/2, re_first/2, search/2, filter/2]).
 
 from_nodes(Nodes) when is_list(Nodes) ->
     #{type => selectors, nodes => Nodes}.
@@ -48,6 +48,15 @@ re_first(Pattern, Selectors) ->
         [Match | _] -> Match;
         [] -> undefined
     end.
+
+search(Selectors, Fun) ->
+    case [Node || Node <- to_list(Selectors), Fun(Node)] of
+        [Match | _] -> Match;
+        [] -> undefined
+    end.
+
+filter(Selectors, Fun) ->
+    from_nodes([Node || Node <- to_list(Selectors), Fun(Node)]).
 
 flatten(Lists) ->
     lists:append(Lists).
