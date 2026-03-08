@@ -1,10 +1,12 @@
 -module(scrapling_crawler_engine).
 
--export([crawl/2]).
+-export([crawl/2, crawl/3]).
 
 crawl(SpiderModule, SessionManager) ->
-    Requests = start_requests(SpiderModule),
-    Scheduler0 = enqueue_all(Requests, scrapling_scheduler:new()),
+    crawl(SpiderModule, SessionManager, #{}).
+
+crawl(SpiderModule, SessionManager, Opts) when is_map(Opts) ->
+    Scheduler0 = initial_scheduler(SpiderModule, Opts),
     AllowedDomains = allowed_domains(SpiderModule),
     loop(SpiderModule, SessionManager, Scheduler0, [], scrapling_crawl_stats:new(), AllowedDomains).
 
@@ -84,6 +86,15 @@ enqueue_all([], Scheduler) ->
 enqueue_all([Request | Rest], Scheduler0) ->
     {_Accepted, Scheduler1} = scrapling_scheduler:enqueue(Request, Scheduler0),
     enqueue_all(Rest, Scheduler1).
+
+initial_scheduler(SpiderModule, Opts) ->
+    case maps:get(checkpoint_data, Opts, undefined) of
+        undefined ->
+            Requests = start_requests(SpiderModule),
+            enqueue_all(Requests, scrapling_scheduler:new());
+        CheckpointData ->
+            scrapling_scheduler:restore(CheckpointData)
+    end.
 
 ensure_loaded(Module) ->
     case code:ensure_loaded(Module) of

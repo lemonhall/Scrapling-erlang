@@ -93,7 +93,9 @@
 - 已完成：`scrapling_spider_tests` 固化 `start_urls -> parse -> item -> follow-up request` 与 `allowed_domains` 过滤语义
 - 已完成：`scrapling_checkpoint` 首轮切片，支持 checkpoint save/load/cleanup roundtrip
 - 已完成：`scrapling_checkpoint_tests` 固化请求与 seen 的持久化回环
-- 待完成：pause-resume / stream / blocked retry
+- 已完成：resume 路径已接入 `scrapling_spider:start/2`，可从已有 checkpoint 恢复 pending requests 并在成功完成后清理 checkpoint 文件
+- 已完成：`scrapling_spider_e2e_tests` 首轮覆盖 checkpoint restore -> crawl completion 闭环
+- 待完成：真正的 pause 触发、stream 模式、blocked retry
 
 ## Evidence
 
@@ -102,4 +104,5 @@
 - `rebar3 eunit -m scrapling_session_manager_tests`
 - `rebar3 eunit -m scrapling_spider_tests`
 - `rebar3 eunit -m scrapling_checkpoint_tests`
+- `rebar3 eunit -m scrapling_spider_e2e_tests`
 - `rebar3 eunit`
