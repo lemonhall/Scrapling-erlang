@@ -98,8 +98,33 @@ browser_port_wait_selector_state_mismatch_test() ->
         ok = scrapling_test_httpd:stop(Server)
     end.
 
+browser_port_page_action_click_test() ->
+    {ok, Server, BaseUrl} = scrapling_test_httpd:start_link(fun html_handler/1),
+    try
+        {ok, Response} = scrapling_browser_port:fetch(
+                           BaseUrl ++ "/page-action",
+                           #{page_action => [#{type => click, selector => ".load-more"}],
+                             wait_selector => "#loaded-card",
+                             wait_selector_state => "visible"}),
+        ?assertEqual(200, maps:get(status_code, Response)),
+        ?assertMatch([{_, _}], binary:matches(maps:get(body, Response), <<"Loaded Via Action">>))
+    after
+        ok = scrapling_test_httpd:stop(Server)
+    end.
+
+browser_port_invalid_page_action_test() ->
+    {error, Error} = scrapling_browser_port:fetch(
+                       "http://example.com",
+                       #{page_action => [#{type => drag, selector => ".load-more"}]}),
+    ?assertEqual(<<"invalid_page_action">>, maps:get(type, Error)).
+
 html_handler(#{path := "/wait-states"}) ->
     {ok, Body} = file:read_file(filename:join(["apps", "scrapling", "test", "fixtures", "browser_wait_states.html"])),
+    #{status => 200,
+      headers => [{"content-type", "text/html; charset=utf-8"}],
+      body => Body};
+html_handler(#{path := "/page-action"}) ->
+    {ok, Body} = file:read_file(filename:join(["apps", "scrapling", "test", "fixtures", "browser_page_action.html"])),
     #{status => 200,
       headers => [{"content-type", "text/html; charset=utf-8"}],
       body => Body};

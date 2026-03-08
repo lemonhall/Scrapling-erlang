@@ -10,6 +10,13 @@ from urllib.error import HTTPError, URLError
 VALID_WAIT_SELECTOR_STATES = {"attached", "detached", "hidden", "visible"}
 
 
+class PageActionError(Exception):
+    def __init__(self, error_type: str, message: str) -> None:
+        super().__init__(message)
+        self.error_type = error_type
+        self.message = message
+
+
 class ElementCollector(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -54,6 +61,19 @@ def encode_headers(headers) -> str:
     return base64.b64encode("\n".join(lines).encode("utf-8")).decode("ascii")
 
 
+def decode_page_actions(value: str | None) -> list[dict[str, str]]:
+    if not value:
+        return []
+    raw = base64.b64decode(value.encode("ascii")).decode("utf-8")
+    actions: list[dict[str, str]] = []
+    for line in raw.splitlines():
+        if not line:
+            continue
+        pairs = urllib.parse.parse_qsl(line, keep_blank_values=True)
+        actions.append({key: val for key, val in pairs})
+    return actions
+
+
 def normalize_attrs(attrs) -> dict[str, str]:
     normalized: dict[str, str] = {}
     for name, value in attrs:
@@ -79,10 +99,6 @@ def is_blocked(url: str, blocked_domains: str | None) -> bool:
         if hostname == domain or hostname.endswith("." + domain):
             return True
     return False
-
-
-def selector_present(html: str, selector: str | None) -> bool:
-    return selector_state_satisfied(html, selector, "attached")
 
 
 def selector_state_satisfied(html: str, selector: str | None, state: str) -> bool:
@@ -132,6 +148,38 @@ def element_visible(attrs: dict[str, str]) -> bool:
     return True
 
 
+def apply_page_actions(html: str, actions: list[dict[str, str]]) -> str:
+    current = html
+    for action in actions:
+        action_type = action.get("type", "").strip().lower()
+        if action_type == "click":
+            current = apply_click_action(current, action.get("selector"))
+            continue
+        raise PageActionError("invalid_page_action", f"Unsupported page_action type: {action_type}")
+    return current
+
+
+def apply_click_action(html: str, selector: str | None) -> str:
+    if not selector:
+        raise PageActionError("invalid_page_action", "click page_action requires selector")
+    for tag, attrs in parse_elements(html):
+        if selector_matches(tag, attrs, selector):
+            payload_b64 = attrs.get("data-page-action-html-b64", "")
+            if not payload_b64:
+                raise PageActionError("page_action_not_supported", selector)
+            snippet = base64.b64decode(payload_b64.encode("ascii")).decode("utf-8")
+            return inject_before_body(html, snippet)
+    raise PageActionError("page_action_target_not_found", selector)
+
+
+def inject_before_body(html: str, snippet: str) -> str:
+    marker = "</body>"
+    index = html.lower().rfind(marker)
+    if index == -1:
+        return html + snippet
+    return html[:index] + snippet + html[index:]
+
+
 def do_ping() -> dict[str, str]:
     return {"ok": "true", "name": "scrapling-browser-sidecar", "protocol_version": "1"}
 
@@ -177,11 +225,16 @@ def do_fetch(request: dict[str, str]) -> dict[str, str]:
     except Exception as error:
         return {"ok": "false", "type": "sidecar_exception", "message": str(error)}
 
+    text = body.decode("utf-8", errors="replace")
+    try:
+        text = apply_page_actions(text, decode_page_actions(request.get("page_action_b64")))
+    except PageActionError as error:
+        return {"ok": "false", "type": error.error_type, "message": error.message}
+
     wait_ms = int(request.get("wait_ms", "0") or "0")
     if wait_ms > 0:
         time.sleep(wait_ms / 1000.0)
 
-    text = body.decode("utf-8", errors="replace")
     wait_selector = request.get("wait_selector")
     if not selector_state_satisfied(text, wait_selector, wait_selector_state):
         error_type = "selector_not_found" if wait_selector_state == "attached" else "selector_state_not_satisfied"
@@ -191,13 +244,14 @@ def do_fetch(request: dict[str, str]) -> dict[str, str]:
             "message": wait_selector or "",
         }
 
+    final_body = text.encode("utf-8")
     return {
         "ok": "true",
         "status_code": str(status),
         "reason_phrase": str(reason),
         "url": final_url,
         "method": method,
-        "body_b64": base64.b64encode(body).decode("ascii"),
+        "body_b64": base64.b64encode(final_body).decode("ascii"),
         "headers_b64": encode_headers(response_headers),
         "engine": "python-sidecar",
         "headless": request.get("headless", "true"),

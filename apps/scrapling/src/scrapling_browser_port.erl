@@ -38,7 +38,11 @@ fetch(Url, Opts) when is_map(Opts) ->
 
 validate_fetch_opts(Opts) ->
     case validate_cdp_url(maps:get(cdp_url, Opts, undefined)) of
-        ok -> validate_wait_selector_state(maps:get(wait_selector_state, Opts, undefined));
+        ok ->
+            case validate_wait_selector_state(maps:get(wait_selector_state, Opts, undefined)) of
+                ok -> validate_page_action(maps:get(page_action, Opts, undefined));
+                Error -> Error
+            end;
         Error -> Error
     end.
 
@@ -83,6 +87,14 @@ validate_wait_selector_state(State) ->
                message => <<"wait_selector_state must be one of attached, detached, hidden, visible">>}}
     end.
 
+validate_page_action(undefined) ->
+    ok;
+validate_page_action(PageAction) ->
+    case normalize_page_actions(PageAction) of
+        {ok, _Actions} -> ok;
+        {error, Error} -> {error, Error}
+    end.
+
 fetch_params(Url, Opts) ->
     Base = [{"command", "fetch"},
             {"url", to_list(Url)},
@@ -94,7 +106,8 @@ fetch_params(Url, Opts) ->
     WithWait = maybe_add_param("wait_ms", int_to_list(maps:get(wait, Opts, undefined)), WithHeadless),
     WithNetworkIdle = maybe_add_param("network_idle", bool_string(maps:get(network_idle, Opts, undefined)), WithWait),
     WithBlocked = maybe_add_param("blocked_domains", blocked_domains_value(maps:get(blocked_domains, Opts, undefined)), WithNetworkIdle),
-    WithProxy = maybe_add_param("proxy", proxy_value(maps:get(proxy, Opts, undefined)), WithBlocked),
+    WithPageAction = maybe_add_param("page_action_b64", page_action_value(maps:get(page_action, Opts, undefined)), WithBlocked),
+    WithProxy = maybe_add_param("proxy", proxy_value(maps:get(proxy, Opts, undefined)), WithPageAction),
     maybe_add_param("headers_b64", encode_headers(maps:get(headers, Opts, [])), WithProxy).
 
 call(Params) ->
@@ -103,7 +116,8 @@ call(Params) ->
     Port = open_port(
              {spawn_executable, Python},
              [binary, exit_status, use_stdio, stderr_to_stdout, hide, eof, {args, ["-u", Sidecar]}]),
-    Request = iolist_to_binary([uri_string:compose_query(Params), "\n"]),
+    Request = iolist_to_binary([uri_string:compose_query(Params), "
+"]),
     true = port_command(Port, Request),
     collect_port_output(Port, <<>>).
 
@@ -145,7 +159,8 @@ decode_body(Value) ->
 decode_headers("") ->
     [];
 decode_headers(Value) ->
-    Lines = string:split(binary_to_list(base64:decode(to_binary(Value))), "\n", all),
+    Lines = string:split(binary_to_list(base64:decode(to_binary(Value))), "
+", all),
     [{Name, HeaderValue} || Line <- Lines,
                            Line =/= [],
                            {Name, HeaderValue} <- [split_header(Line)]].
@@ -163,7 +178,8 @@ encode_headers(Headers) when is_map(Headers) ->
 encode_headers([]) ->
     undefined;
 encode_headers(Headers) when is_list(Headers) ->
-    base64:encode_to_string(iolist_to_binary([[to_list(Name), ":", to_list(Value), "\n"] || {Name, Value} <- Headers])).
+    base64:encode_to_string(iolist_to_binary([[to_list(Name), ":", to_list(Value), "
+"] || {Name, Value} <- Headers])).
 
 maybe_add_param(_Key, undefined, Params) ->
     Params;
@@ -176,6 +192,64 @@ blocked_domains_value(undefined) ->
     undefined;
 blocked_domains_value(Values) when is_list(Values) ->
     string:join([to_list(Value) || Value <- Values], ",").
+
+page_action_value(undefined) ->
+    undefined;
+page_action_value(PageAction) ->
+    {ok, Actions} = normalize_page_actions(PageAction),
+    case Actions of
+        [] -> undefined;
+        _ ->
+            base64:encode_to_string(
+              iolist_to_binary([
+                  [uri_string:compose_query(action_query(Action)), "
+"] || Action <- Actions
+              ]))
+    end.
+
+normalize_page_actions(PageAction) when is_map(PageAction) ->
+    case normalize_single_page_action(PageAction) of
+        {ok, Action} -> {ok, [Action]};
+        Error -> Error
+    end;
+normalize_page_actions(PageActions) when is_list(PageActions) ->
+    normalize_page_actions_list(PageActions, []);
+normalize_page_actions(_) ->
+    invalid_page_action_error().
+
+normalize_page_actions_list([], Acc) ->
+    {ok, lists:reverse(Acc)};
+normalize_page_actions_list([Action | Rest], Acc) when is_map(Action) ->
+    case normalize_single_page_action(Action) of
+        {ok, Normalized} -> normalize_page_actions_list(Rest, [Normalized | Acc]);
+        Error -> Error
+    end;
+normalize_page_actions_list(_, _Acc) ->
+    invalid_page_action_error().
+
+normalize_single_page_action(Action) ->
+    Type = normalize_action_type(maps:get(type, Action, undefined)),
+    Selector = maps:get(selector, Action, undefined),
+    case {Type, Selector} of
+        {"click", Value} when Value =/= undefined ->
+            {ok, #{type => Type, selector => to_list(Value)}};
+        _ ->
+            invalid_page_action_error()
+    end.
+
+normalize_action_type(click) -> "click";
+normalize_action_type(Value) when is_binary(Value) -> string:lowercase(binary_to_list(Value));
+normalize_action_type(Value) when is_list(Value) -> string:lowercase(Value);
+normalize_action_type(Value) when is_atom(Value) -> string:lowercase(atom_to_list(Value));
+normalize_action_type(_) -> undefined.
+
+action_query(Action) ->
+    [{"type", maps:get(type, Action)}, {"selector", maps:get(selector, Action)}].
+
+invalid_page_action_error() ->
+    {error,
+     #{type => <<"invalid_page_action">>,
+       message => <<"page_action must be a map or list of maps with supported type and selector">>}}.
 
 proxy_value(undefined) ->
     undefined;

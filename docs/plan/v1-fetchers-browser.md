@@ -88,7 +88,8 @@
 - 已完成：`scrapling_browser_port` 在起 sidecar 前对 `cdp_url` 做最小契约校验；非法 scheme / host 返回 `invalid_cdp_url`，合法 `ws/wss` 但当前 sidecar 尚未支持时返回 `unsupported_cdp_url`
 - 已完成：`wait_selector_state` 最小语义已打通，支持 `attached` / `visible` / `hidden` / `detached` 四种状态，并对非法枚举返回 `invalid_wait_selector_state`
 - 已完成：`blocked_domains` 的目标 URL host 级别 exact / subdomain 拦截语义已用 contract tests 固化
-- 待完成：更完整的浏览器参数语义（`page_action`、真实子资源拦截、CDP 接管、stealth 指纹）
+- 已完成：声明式 `page_action` click DSL 已接入 `scrapling_browser_port`、`DynamicFetcher`、`StealthFetcher` 与 Python sidecar，支持基于元素属性的 DOM 注入闭环
+- 待完成：更完整的浏览器参数语义（真实子资源拦截、CDP 接管、stealth 指纹）
 
 ## Evidence
 

@@ -21,7 +21,7 @@ new(Url) ->
 
 new(Url, Opts) when is_map(Opts) ->
     SessionKeys = [method, body, data, json, headers, extra_headers, proxy, timeout, wait_selector,
-                   wait_selector_state, network_idle, blocked_domains, cdp_url],
+                   wait_selector_state, network_idle, blocked_domains, cdp_url, page_action],
     SessionOpts = maps:with(SessionKeys, Opts),
     #{url => to_binary(Url),
       sid => to_binary(maps:get(sid, Opts, <<>>)),
