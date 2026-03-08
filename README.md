@@ -2,13 +2,13 @@
 
 `Scrapling-erlang` 的目标，是把本机源码仓 `E:\development\Scrapling` 在 **Erlang/OTP** 上做成能力对等实现。
 
-当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator + browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session 首轮切片 + browser contract 校验补强 + spider request 首刀**，并已通过当前全量 `eunit` 门禁。
+当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator + browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session 首轮切片 + browser contract 校验补强 + spider request/scheduler 首两刀**，并已通过当前全量 `eunit` 门禁。
 
 ## 当前状态
 
 - 源项目基线：本机 `E:\development\Scrapling`
 - 源项目版本快照：`scrapling/__init__.py` 显示 `0.4.1`
-- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session、本地 HTTP fixture server、`cdp_url` 最小契约校验、`wait_selector_state` 四态语义、browser session 错误隔离、`blocked_domains` 目标域拦截契约，以及 spider `Request` 值对象 / copy / domain / fingerprint 骨架，与 `50` 条 eunit 测试闭环
+- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session/stealth fetcher/stealth session、本地 HTTP fixture server、`cdp_url` 最小契约校验、`wait_selector_state` 四态语义、browser session 错误隔离、`blocked_domains` 目标域拦截契约，以及 spider `Request` / `Scheduler` 骨架，与 `53` 条 eunit 测试闭环
 - 默认目标：让 **Erlang / BEAM 社区** 获得与源项目等价的解析、抓取、蜘蛛、CLI、AI/MCP 能力
 
 ## 文档入口
@@ -36,7 +36,7 @@
 
 当前阶段已经完成文档矩阵、bootstrap、静态抓取、浏览器抓取的多轮收口，并已进入 M5 Spider runtime：
 
-1. 继续 `docs/plan/v1-spider-runtime.md`，补 `Scheduler` 与最小去重/出队闭环
-2. 落 `SessionManager + CrawlerEngine` 的最小串行 crawl 路径
+1. 继续 `docs/plan/v1-spider-runtime.md`，落 `SessionManager + CrawlerEngine` 的最小串行 crawl 路径
+2. 在 M5 中补 `Spider` 最小 parse/start 闭环与基础 stats
 3. 回到 `docs/plan/v1-fetchers-browser.md`，继续补 `page_action`、子资源拦截与真实 `cdp_url` 接管
 4. 持续更新 `docs/plan/v1-index.md` 的追溯矩阵、证据与里程碑状态

@@ -4,6 +4,7 @@
   {registered, []},
   {modules, [scrapling,
              scrapling_request,
+             scrapling_scheduler,
              scrapling_browser_port,
              scrapling_dynamic_fetcher,
              scrapling_dynamic_session,

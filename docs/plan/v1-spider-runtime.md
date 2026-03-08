@@ -43,6 +43,7 @@
 - Create: `apps/scrapling/src/scrapling_crawler_engine.erl`
 - Create: `apps/scrapling/src/scrapling_spider.erl`
 - Create: `apps/scrapling/test/scrapling_request_tests.erl`
+- Create: `apps/scrapling/test/scrapling_scheduler_tests.erl`
 - Create: `apps/scrapling/test/scrapling_spider_tests.erl`
 - Create: `apps/scrapling/test/scrapling_spider_e2e_tests.erl`
 
@@ -81,10 +82,13 @@
 - 已完成：`scrapling_request` 值对象首轮切片，支持 `url/sid/callback/priority/dont_filter/meta/session_opts` 访问
 - 已完成：`scrapling_request:copy/1`、`domain/1` 与最小 `fingerprint/1`，为后续 scheduler 去重与 session 路由铺路
 - 已完成：`scrapling_request_tests` 固化默认字段、复制语义与指纹稳定性
-- 待完成：`scrapling_scheduler`、`scrapling_session_manager`、`scrapling_crawler_engine` 与最小 spider 闭环
+- 已完成：`scrapling_scheduler` 首轮切片，支持优先级出队、指纹去重、`dont_filter`、`snapshot/restore`
+- 已完成：`scrapling_scheduler_tests` 固化空队列、优先级、去重与快照恢复语义
+- 待完成：`scrapling_session_manager`、`scrapling_crawler_engine` 与最小 spider 闭环
 - 待完成：checkpoint / pause-resume / stream / blocked retry
 
 ## Evidence
 
 - `rebar3 eunit -m scrapling_request_tests`
+- `rebar3 eunit -m scrapling_scheduler_tests`
 - `rebar3 eunit`
