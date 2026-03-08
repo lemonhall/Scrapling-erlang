@@ -20,6 +20,12 @@ selectors_chaining_test() ->
     ?assertEqual(["Scrapling Erlang"], scrapling_selectors:getall(Headings)),
     ?assertEqual(["Parser smoke fixture"], scrapling_selectors:getall(Summaries)).
 
+selectors_regex_test() ->
+    Doc = fixture_doc(),
+    Items = scrapling_selectors:from_nodes(scrapling_selector:xpath("//*[@id='items']/li", Doc)),
+    ?assertEqual(["alpha", "beta"], scrapling_selectors:re("[a-z]+", Items)),
+    ?assertEqual("beta", scrapling_selectors:re_first("beta", Items)).
+
 fixture_doc() ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", "parser_base.html"]),
     {ok, Html} = file:read_file(Path),

@@ -35,6 +35,13 @@ children_navigation_test() ->
     ?assertEqual("hero", scrapling_selector:attribute("class", lists:nth(1, Children))),
     ?assertEqual("items", scrapling_selector:attribute("id", lists:nth(2, Children))).
 
+selector_regex_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [Heading] = scrapling_selector:xpath("//h1", Doc),
+    ?assertEqual(["Scrapling", "Erlang"], scrapling_selector:re("[A-Z][a-z]+", Heading)),
+    ?assertEqual("Erlang", scrapling_selector:re_first("Erlang", Heading)).
+
 read_fixture(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),

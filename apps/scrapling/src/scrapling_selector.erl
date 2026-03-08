@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1]).
+-export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -50,6 +50,18 @@ children(#xmlElement{content = Content}) ->
     [Node || Node <- Content, is_element_node(Node)];
 children(_) ->
     [].
+
+re(Pattern, Node) ->
+    case re:run(text(Node), Pattern, [global, {capture, first, list}]) of
+        {match, Matches} -> [Match || [Match] <- Matches];
+        nomatch -> []
+    end.
+
+re_first(Pattern, Node) ->
+    case re:run(text(Node), Pattern, [{capture, first, list}]) of
+        {match, [Match]} -> Match;
+        nomatch -> undefined
+    end.
 
 keep_text(#xmlText{}) ->
     true;

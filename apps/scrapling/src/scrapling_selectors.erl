@@ -2,7 +2,7 @@
 
 -compile({no_auto_import, [length/1]}).
 
--export([from_nodes/1, to_list/1, length/1, first/1, last/1, get/1, getall/1, xpath/2, css/2]).
+-export([from_nodes/1, to_list/1, length/1, first/1, last/1, get/1, getall/1, xpath/2, css/2, re/2, re_first/2]).
 
 from_nodes(Nodes) when is_list(Nodes) ->
     #{type => selectors, nodes => Nodes}.
@@ -39,6 +39,15 @@ xpath(Query, Selectors) ->
 
 css(Query, Selectors) ->
     from_nodes(flatten([scrapling_selector:css(Query, Node) || Node <- to_list(Selectors)])).
+
+re(Pattern, Selectors) ->
+    flatten([scrapling_selector:re(Pattern, Node) || Node <- to_list(Selectors)]).
+
+re_first(Pattern, Selectors) ->
+    case re(Pattern, Selectors) of
+        [Match | _] -> Match;
+        [] -> undefined
+    end.
 
 flatten(Lists) ->
     lists:append(Lists).

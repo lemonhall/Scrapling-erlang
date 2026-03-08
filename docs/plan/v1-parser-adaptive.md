@@ -7,7 +7,7 @@
 ## Status
 
 - 状态：doing
-- 当前完成：最小 `from_html/1`、`xpath/2`、`css/2`、`text/1`、`attribute/2`、`tag/1`、`children/1` 与 `Selectors` 集合包装已落地
+- 当前完成：最小 `from_html/1`、`xpath/2`、`css/2`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`re/2`、`re_first/2` 与 `Selectors` 集合包装已落地
 - 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit`
 
 ## PRD Trace
