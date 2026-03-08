@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, xpath/3, css/2, css/3, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2]).
+-export([from_html/1, xpath/2, xpath/3, css/2, css/3, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1, save/2, retrieve/1, relocate/2, find_all/2, find/2]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -138,6 +138,15 @@ relocate(Doc, SavedElement) ->
             end
     end.
 
+find_all(Doc, Query) when is_map(Query) ->
+    [Node || Node <- all_elements(Doc), matches_query(Node, Query)].
+
+find(Doc, Query) when is_map(Query) ->
+    case find_all(Doc, Query) of
+        [Match | _] -> Match;
+        [] -> undefined
+    end.
+
 keep_text(#xmlText{}) ->
     true;
 keep_text(#xmlElement{}) ->
@@ -248,6 +257,31 @@ maybe_save(true, Identifier, Node) ->
     save(Node, Identifier);
 maybe_save(false, _Identifier, _Node) ->
     ok.
+
+matches_query(Node, Query) ->
+    tag_matches(Node, maps:get(tag, Query, undefined)) andalso
+    text_matches(Node, maps:get(text, Query, undefined)) andalso
+    attributes_match(Node, maps:get(attributes, Query, #{})).
+
+tag_matches(_Node, undefined) ->
+    true;
+tag_matches(Node, TagName) ->
+    tag(Node) =:= TagName.
+
+text_matches(_Node, undefined) ->
+    true;
+text_matches(Node, Value) ->
+    text(Node) =:= Value.
+
+attributes_match(_Node, Attrs) when map_size(Attrs) =:= 0 ->
+    true;
+attributes_match(Node, Attrs) ->
+    maps:fold(
+      fun(Key, Value, Acc) ->
+          Acc andalso attribute(Key, Node) =:= Value
+      end,
+      true,
+      Attrs).
 
 css_to_xpath(Selector) ->
     Trimmed = string:trim(Selector),

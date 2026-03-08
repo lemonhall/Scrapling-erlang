@@ -59,6 +59,16 @@ css_pseudo_text_and_attr_test() ->
     ?assertEqual(["Read docs"], [scrapling_selector:get(Node) || Node <- LinkTexts]),
     ?assertEqual(["/docs"], [scrapling_selector:get(Node) || Node <- LinkHrefs]).
 
+find_all_and_find_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    Items = scrapling_selector:find_all(Doc, #{tag => "li"}),
+    Summary = scrapling_selector:find(Doc, #{tag => "p", attributes => #{"data-role" => "summary"}}),
+    Link = scrapling_selector:find(Doc, #{text => "Read docs"}),
+    ?assertEqual(2, length(Items)),
+    ?assertEqual("Parser smoke fixture", scrapling_selector:text(Summary)),
+    ?assertEqual("/docs", scrapling_selector:attribute("href", Link)).
+
 read_fixture(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),
