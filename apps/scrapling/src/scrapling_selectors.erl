@@ -28,11 +28,11 @@ last(Selectors) ->
 get(Selectors) ->
     case first(Selectors) of
         undefined -> undefined;
-        Node -> scrapling_selector:text(Node)
+        Node -> scrapling_selector:get(Node)
     end.
 
 getall(Selectors) ->
-    [scrapling_selector:text(Node) || Node <- to_list(Selectors)].
+    [scrapling_selector:get(Node) || Node <- to_list(Selectors)].
 
 xpath(Query, Selectors) ->
     from_nodes(flatten([scrapling_selector:xpath(Query, Node) || Node <- to_list(Selectors)])).

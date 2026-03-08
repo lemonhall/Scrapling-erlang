@@ -42,6 +42,15 @@ selector_regex_test() ->
     ?assertEqual(["Scrapling", "Erlang"], scrapling_selector:re("[A-Z][a-z]+", Heading)),
     ?assertEqual("Erlang", scrapling_selector:re_first("Erlang", Heading)).
 
+selector_getters_test() ->
+    Html = read_fixture("parser_base.html"),
+    Doc = scrapling_selector:from_html(Html),
+    [Heading] = scrapling_selector:xpath("//h1", Doc),
+    [HeadingText] = scrapling_selector:xpath("//h1/text()", Doc),
+    ?assertEqual("<h1>Scrapling Erlang</h1>", scrapling_selector:get(Heading)),
+    ?assertEqual(["<h1>Scrapling Erlang</h1>"], scrapling_selector:getall(Heading)),
+    ?assertEqual("Scrapling Erlang", scrapling_selector:get(HeadingText)).
+
 read_fixture(Name) ->
     Path = filename:join(["apps", "scrapling", "test", "fixtures", Name]),
     {ok, Html} = file:read_file(Path),

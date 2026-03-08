@@ -2,7 +2,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 
--export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2]).
+-export([from_html/1, xpath/2, css/2, text/1, attribute/2, tag/1, children/1, re/2, re_first/2, get/1, getall/1]).
 
 from_html(Html) when is_binary(Html) ->
     from_html(unicode:characters_to_list(Html));
@@ -62,6 +62,16 @@ re_first(Pattern, Node) ->
         {match, [Match]} -> Match;
         nomatch -> undefined
     end.
+
+get(Node = #xmlElement{}) ->
+    lists:flatten(xmerl:export_simple_content([Node], xmerl_html));
+get(Node = #xmlText{}) ->
+    text(Node);
+get(Node = #xmlAttribute{}) ->
+    text(Node).
+
+getall(Node) ->
+    [?MODULE:get(Node)].
 
 keep_text(#xmlText{}) ->
     true;
