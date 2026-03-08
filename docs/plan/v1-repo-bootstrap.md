@@ -4,6 +4,12 @@
 
 把空目录启动为可执行的 Erlang/OTP 项目骨架，并把文档矩阵、脚本骨架、最小测试门禁一次性建立起来，为后续 parity 工作提供稳定底座。
 
+## Status
+
+- 状态：done
+- 完成日期：2026-03-08
+- 证据命令：`pwsh.exe -Command .\scripts\erlang-env.ps1 -SkipRebar3Verify`、`rebar3 eunit -m scrapling_bootstrap_tests`、`rebar3 eunit`
+
 ## PRD Trace
 
 - REQ-0001-001
@@ -68,4 +74,3 @@
 - 当前仓未初始化 git，Ship 前需要补齐
 - `rebar3` 与 OTP 版本口径要尽早锁定，否则后续测试命令会漂移
 - 如果一开始就把模块拆得过细，会放大空壳代码比例
-

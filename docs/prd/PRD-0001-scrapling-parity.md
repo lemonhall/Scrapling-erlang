@@ -49,7 +49,7 @@
 ## 3) 非目标（Non-goals）
 
 - NG1：不承诺 Python 代码逐行翻译；本项目是 **Erlang 化实现**，不是 Python 解释器
-- NG2：不在本轮偷偷扩展到 Kotlin 对等仓；如需同时做 Kotlin，对本 PRD 走 ECN
+- NG2：不在本轮偷偷扩展到其他语言 sibling；如需扩范围，对本 PRD 走 ECN
 - NG3：不把“暂时返回占位值”的假实现视为能力完成
 
 ## 4) 术语与口径（Glossary / Contracts）
@@ -147,4 +147,3 @@
 | REQ-0001-010 | `docs/plan/v1-cli-ai-docs.md` | `rebar3 eunit -m scrapling_cli_tests` | `_build/test/logs/...` | `apps/scrapling/src/scrapling_cli*.erl` |
 | REQ-0001-011 | `docs/plan/v1-cli-ai-docs.md` | `rebar3 eunit -m scrapling_mcp_tests` | `_build/test/logs/...` | `apps/scrapling/src/scrapling_mcp*.erl` |
 | REQ-0001-012 | `docs/plan/v1-index.md` | `rebar3 eunit` | `_build/test/logs/...` | `apps/scrapling/test/` / `scripts/` |
-

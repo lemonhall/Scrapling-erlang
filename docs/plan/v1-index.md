@@ -28,7 +28,7 @@
 
 | 里程碑 | 范围 | DoD | 验证命令 / 测试 | 状态 |
 |---|---|---|---|---|
-| M1 仓库基建 | 建立 `rebar3` 骨架、测试骨架、脚本骨架、文档矩阵 | `rebar.config`、`apps/scrapling/`、`scripts/erlang-env.ps1`、最小 eunit 全部到位；文档链路不缺口 | `rebar3 eunit -m scrapling_bootstrap_tests` | todo |
+| M1 仓库基建 | 建立 `rebar3` 骨架、测试骨架、脚本骨架、文档矩阵 | `rebar.config`、`apps/scrapling/`、`scripts/erlang-env.ps1`、最小 eunit 全部到位；文档链路不缺口 | `rebar3 eunit -m scrapling_bootstrap_tests` | done |
 | M2 Parser / Adaptive | Selector、Selectors、导航、存储、relocate | 本地 fixture 上完成 CSS/XPath/regex/navigation/save/retrieve/relocate 行为 | `rebar3 eunit -m scrapling_selector_tests`；`rebar3 eunit -m scrapling_adaptive_tests` | todo |
 | M3 Static Fetchers | HTTP Fetcher、Session、ProxyRotator、统一 Response | GET/POST/PUT/DELETE、session 复用、headers/cookies/proxy 全覆盖 | `rebar3 eunit -m scrapling_fetcher_tests` | todo |
 | M4 Browser Fetchers | Dynamic / Stealth / browser sidecar | wait / page action / wait selector / blocked domains / stealth 配置可工作 | `rebar3 eunit -m scrapling_dynamic_fetcher_tests`；`rebar3 eunit -m scrapling_stealth_fetcher_tests` | todo |
@@ -50,7 +50,7 @@
 
 | Req ID | v1 Plan | tests / commands | 证据 | 状态 |
 |---|---|---|---|---|
-| REQ-0001-001 | `v1-repo-bootstrap` | 文档追溯检查 + bootstrap smoke | `docs/plan/v1-index.md` | todo |
+| REQ-0001-001 | `v1-repo-bootstrap` | 文档追溯检查 + bootstrap smoke | `docs/plan/v1-index.md`、`docs/prd/PRD-0001-scrapling-parity.md` | done |
 | REQ-0001-002 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_selector_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-003 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_adaptive_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-004 | `v1-fetchers-static` | `rebar3 eunit -m scrapling_fetcher_tests` | `_build/test/logs/...` | todo |
@@ -61,7 +61,7 @@
 | REQ-0001-009 | `v1-spider-runtime` | `rebar3 eunit -m scrapling_spider_e2e_tests` | checkpoint 与日志产物 | todo |
 | REQ-0001-010 | `v1-cli-ai-docs` | `rebar3 eunit -m scrapling_cli_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-011 | `v1-cli-ai-docs` | `rebar3 eunit -m scrapling_mcp_tests` | `_build/test/logs/...` | todo |
-| REQ-0001-012 | `v1-repo-bootstrap` / `v1-cli-ai-docs` | `rebar3 eunit` | 全量测试日志 | todo |
+| REQ-0001-012 | `v1-repo-bootstrap` / `v1-cli-ai-docs` | `rebar3 eunit` | 当前证据：bootstrap 全量 eunit 通过；最终全仓门禁待继续扩充 | doing |
 
 ## ECN 索引
 
@@ -70,8 +70,6 @@
 
 ## 差异列表
 
-- 当前仓库尚未初始化为 `rebar3` 项目，M1 尚未开始
 - 当前仓库尚未建立 git 仓库；后续执行到 Ship 阶段前需补齐
 - 浏览器 / stealth 能力在 Erlang 中需要 adapter 设计，暂未冻结具体底层实现
 - 源项目文档量大于本仓当前文档量，后续必须把使用文档和 API 文档补齐，不能只交代码
-

@@ -6,7 +6,7 @@
 
 当前阶段：
 
-- **2026-03-08**：文档与计划阶段，尚未进入 Erlang 代码实现
+- **2026-03-08**：已完成 `v1-repo-bootstrap`，仓库具备最小 Erlang 骨架、环境脚本与 bootstrap eunit
 - 源项目快照版本：`0.4.1`
 - 目标：按 `docs/prd/PRD-0001-scrapling-parity.md` 与 `docs/plan/v1-index.md` 做能力对等复刻
 
@@ -19,7 +19,7 @@
 - Windows PowerShell 7.x（必须显式用 `pwsh.exe`）
 - 中国大陆网络环境通常需要代理
 
-当前仓库尚未 bootstrap，因此下面这些命令是**目标态命令**，会在 `v1-repo-bootstrap` 完成后具备：
+当前仓库已经完成 bootstrap，下面这些命令可直接作为本地开发入口：
 
 - 设置环境（无代理）：`. .\scripts\erlang-env.ps1 -SkipRebar3Verify`
 - 设置环境（带代理）：`. .\scripts\erlang-env.ps1 -EnableProxy -SkipRebar3Verify`
@@ -71,6 +71,8 @@
 
 ## Working Rules
 
+- 直接在 `main` 上开发（当前仓无多人协作 / 无 worktree 要求）
+- 每完成一个明确 slice，执行一次 `git add -A && git commit && git push`
 - 不允许擅自打折“像素级复刻”目标
 - 不允许把“计划里写了”当成“已经完成”
 - 每次进入实现前，先更新追溯矩阵
