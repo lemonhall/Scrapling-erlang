@@ -81,8 +81,9 @@
 - 已完成：`scrapling_browser_port` Port sidecar 契约与 Python sidecar 最小实现
 - 已完成：`scrapling_dynamic_fetcher` 通过 sidecar 获取页面并转换为统一 `scrapling_response`
 - 已完成：`scrapling_dynamic_session` 支持默认参数复用与逐请求覆盖
+- 已完成：`scrapling_stealth_fetcher` 最小包装层，先把 stealth 参数面与统一 response 契约打通
 - 已完成：本地 HTTP fixture + 真实 sidecar 进程的 contract test
-- 待完成：`scrapling_stealth_fetcher`、`scrapling_stealth_session`
+- 待完成：`scrapling_stealth_session`
 - 待完成：更完整的浏览器参数语义（`page_action`、真实资源拦截、stealth 指纹）
 
 ## Evidence
@@ -90,4 +91,5 @@
 - `rebar3 eunit -m scrapling_browser_contract_tests`
 - `rebar3 eunit -m scrapling_dynamic_fetcher_tests`
 - `rebar3 eunit -m scrapling_dynamic_session_tests`
+- `rebar3 eunit -m scrapling_stealth_fetcher_tests`
 - `rebar3 eunit`

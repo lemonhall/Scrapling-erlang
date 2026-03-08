@@ -2,13 +2,13 @@
 
 `Scrapling-erlang` 的目标，是把本机源码仓 `E:\development\Scrapling` 在 **Erlang/OTP** 上做成能力对等实现。
 
-当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator + browser sidecar/dynamic fetcher 首刀**，并已通过当前全量 `eunit` 门禁。
+当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator + browser sidecar/dynamic fetcher/dynamic session/stealth fetcher 首轮切片**，并已通过当前全量 `eunit` 门禁。
 
 ## 当前状态
 
 - 源项目基线：本机 `E:\development\Scrapling`
 - 源项目版本快照：`scrapling/__init__.py` 显示 `0.4.1`
-- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session、本地 HTTP fixture server，与 `33` 条 eunit 测试闭环
+- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、browser sidecar/dynamic fetcher/dynamic session/stealth fetcher、本地 HTTP fixture server，与 `34` 条 eunit 测试闭环
 - 默认目标：让 **Erlang / BEAM 社区** 获得与源项目等价的解析、抓取、蜘蛛、CLI、AI/MCP 能力
 
 ## 文档入口
@@ -34,8 +34,8 @@
 
 ## 下一步
 
-当前阶段已经完成文档矩阵、bootstrap 与静态抓取底座，下一步继续补齐 parser / adaptive 剩余导航能力，并进入浏览器抓取：
+当前阶段已经完成文档矩阵、bootstrap、静态抓取与浏览器抓取的首轮切片，下一步继续把 M4 从“可跑”补到“可对齐”：
 
-1. 回到 `docs/plan/v1-parser-adaptive.md`，补齐 `parent/siblings/next/previous/find_ancestor`
-2. 进入 `docs/plan/v1-fetchers-browser.md`，建立 dynamic / stealth 的红绿测试
+1. 继续 `docs/plan/v1-fetchers-browser.md`，补齐 `StealthSession`
+2. 扩充 sidecar 的浏览器参数语义：`page_action`、更真实的资源拦截、blocked domains
 3. 持续更新 `docs/plan/v1-index.md` 的追溯矩阵、证据与里程碑状态
