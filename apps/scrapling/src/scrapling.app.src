@@ -2,7 +2,7 @@
  [{description, "Scrapling Erlang parity project"},
   {vsn, "0.1.0-dev"},
   {registered, []},
-  {modules, [scrapling, scrapling_selector]},
+  {modules, [scrapling, scrapling_selector, scrapling_selectors]},
   {applications, [kernel, stdlib]},
   {env, []}
  ]}.

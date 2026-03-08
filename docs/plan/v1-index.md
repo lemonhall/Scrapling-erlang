@@ -51,7 +51,7 @@
 | Req ID | v1 Plan | tests / commands | 证据 | 状态 |
 |---|---|---|---|---|
 | REQ-0001-001 | `v1-repo-bootstrap` | 文档追溯检查 + bootstrap smoke | `docs/plan/v1-index.md`、`docs/prd/PRD-0001-scrapling-parity.md` | done |
-| REQ-0001-002 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_selector_tests` | 当前证据：最小 `from_html/xpath/text/attribute` slice 已通过 | doing |
+| REQ-0001-002 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_selector_tests`；`rebar3 eunit -m scrapling_selectors_tests` | 当前证据：最小 `from_html/xpath/css/text/attribute` 与 `Selectors` slice 已通过 | doing |
 | REQ-0001-003 | `v1-parser-adaptive` | `rebar3 eunit -m scrapling_adaptive_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-004 | `v1-fetchers-static` | `rebar3 eunit -m scrapling_fetcher_tests` | `_build/test/logs/...` | todo |
 | REQ-0001-005 | `v1-fetchers-browser` | `rebar3 eunit -m scrapling_dynamic_fetcher_tests` | `_build/test/logs/...` | todo |
