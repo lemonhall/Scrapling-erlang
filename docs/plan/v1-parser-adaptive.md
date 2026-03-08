@@ -7,7 +7,7 @@
 ## Status
 
 - 状态：doing
-- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`parent/1`、`siblings/1`、`next/1`、`previous/1`、`find_ancestor/2`、`re/2`、`re_first/2`、`get/1`、`getall/1`、`find_all/2`、`find/2`、CSS `::text` / `::attr()`、手工 `save/retrieve/relocate`、`XPath/CSS adaptive/auto_save`、`Selectors.search/2` 与 `Selectors.filter/2` 已落地
+- 当前完成：最小 `from_html/1`、`xpath/2`、`xpath/3`、`css/2`、`css/3`、`text/1`、`attribute/2`、`tag/1`、`children/1`、`parent/1`、`siblings/1`、`next/1`、`previous/1`、`find_ancestor/2`、`re/2`、`re_first/2`、`get/1`、`getall/1`、`find_all/2`、`find/2`、CSS `::text` / `::attr()`、多 class token 匹配、手工 `save/retrieve/relocate`、`XPath/CSS adaptive/auto_save`、`Selectors.search/2` 与 `Selectors.filter/2` 已落地
 - 当前证据：`rebar3 eunit -m scrapling_selector_tests`、`rebar3 eunit -m scrapling_adaptive_tests`、`rebar3 eunit`
 
 ## PRD Trace
@@ -84,5 +84,6 @@
 
 - 已完成：为 selector 查询结果引入轻量“节点 + 根文档”包装，补上导航所需的上下文
 - 已完成：本地 fixture 上验证 `parent/siblings/next/previous/find_ancestor`
+- 已完成：CSS `.class` / `tag.class` 在多 class 场景下可命中目标节点
 - 已验证：`rebar3 eunit -m scrapling_selector_tests`
 - 已验证：`rebar3 eunit`

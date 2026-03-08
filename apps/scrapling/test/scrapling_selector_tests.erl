@@ -26,6 +26,16 @@ css_simple_selectors_test() ->
     ?assertEqual(["Parser smoke fixture"], [scrapling_selector:text(Node) || Node <- Summary]),
     ?assertEqual(["alpha", "beta"], [scrapling_selector:text(Node) || Node <- Items]).
 
+css_class_token_matching_test() ->
+    Html = read_fixture("parser_classes.html"),
+    Doc = scrapling_selector:from_html(Html),
+    Hero = scrapling_selector:css(".hero", Doc),
+    Banner = scrapling_selector:css(".banner", Doc),
+    Primary = scrapling_selector:css("section.primary", Doc),
+    ?assertEqual(["Class Tokens"], [scrapling_selector:text(Node) || Node <- Hero]),
+    ?assertEqual(["Class Tokens", "Banner Only"], [scrapling_selector:text(Node) || Node <- Banner]),
+    ?assertEqual(["Class Tokens"], [scrapling_selector:text(Node) || Node <- Primary]).
+
 children_navigation_test() ->
     Html = read_fixture("parser_base.html"),
     Doc = scrapling_selector:from_html(Html),

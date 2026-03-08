@@ -502,4 +502,4 @@ attr_predicate(Name, Value) ->
     "@" ++ Name ++ "='" ++ Value ++ "'".
 
 class_predicates(Values) ->
-    ["@class='" ++ Value ++ "'" || Value <- Values].
+    ["contains(@class, '" ++ Value ++ "')" || Value <- Values].
