@@ -2,13 +2,13 @@
 
 `Scrapling-erlang` 的目标，是把本机源码仓 `E:\development\Scrapling` 在 **Erlang/OTP** 上做成能力对等实现。
 
-当前时间点是 **2026-03-08**，本仓库已进入 **v1-repo-bootstrap** 实施阶段，并已完成最小 Erlang 骨架与 smoke test。
+当前时间点是 **2026-03-08**，本仓库已完成 **bootstrap + parser/adaptive 基础切片 + static fetcher/session/proxy rotator** 的首轮实现，并已通过当前全量 `eunit` 门禁。
 
 ## 当前状态
 
 - 源项目基线：本机 `E:\development\Scrapling`
 - 源项目版本快照：`scrapling/__init__.py` 显示 `0.4.1`
-- 当前仓状态：已建立 `rebar3` 骨架、最小 facade、环境脚本、fixture 与 bootstrap eunit，并已验证通过
+- 当前仓状态：已建立 `rebar3` 骨架、selector/selectors/adaptive 存储、静态 fetcher/session/proxy rotation、本地 HTTP fixture server，与 `23` 条 eunit 测试闭环
 - 默认目标：让 **Erlang / BEAM 社区** 获得与源项目等价的解析、抓取、蜘蛛、CLI、AI/MCP 能力
 
 ## 文档入口
@@ -34,8 +34,8 @@
 
 ## 下一步
 
-当前阶段已经完成文档矩阵与 bootstrap，下一步进入 parser / adaptive：
+当前阶段已经完成文档矩阵、bootstrap 与静态抓取底座，下一步继续补齐 parser / adaptive 剩余导航能力，并进入浏览器抓取：
 
-1. 进入 `docs/plan/v1-parser-adaptive.md`
-2. 建立 `Selector / Selectors` 与 adaptive 存储的红绿测试闭环
-3. 持续更新 `docs/plan/v1-index.md` 的追溯矩阵与里程碑状态
+1. 回到 `docs/plan/v1-parser-adaptive.md`，补齐 `parent/siblings/next/previous/find_ancestor`
+2. 进入 `docs/plan/v1-fetchers-browser.md`，建立 dynamic / stealth 的红绿测试
+3. 持续更新 `docs/plan/v1-index.md` 的追溯矩阵、证据与里程碑状态

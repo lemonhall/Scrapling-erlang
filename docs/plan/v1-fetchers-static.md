@@ -73,3 +73,17 @@
 - session 状态如果没抽象好，浏览器 fetcher 与 spider 会重复造轮子
 - proxy rotation 要定义清楚失败时如何切换与复用
 
+## Implementation Status
+
+- 已完成：`scrapling_fetcher` 支持 `GET / POST / PUT / DELETE`
+- 已完成：`scrapling_response` 统一 `status/body/headers/meta/document` 契约，并可直连 parser
+- 已完成：`scrapling_fetcher_session` 维持 headers / cookies / proxy rotation 的会话态
+- 已完成：`scrapling_proxy_rotator` 支持 cyclic 与自定义函数策略
+- 已完成：本地 `gen_tcp` fixture server 测试支撑，避免“只 mock 文件不测网络层”
+
+## Evidence
+
+- `rebar3 eunit -m scrapling_fetcher_tests`
+- `rebar3 eunit -m scrapling_session_tests`
+- `rebar3 eunit -m scrapling_fetcher_e2e_tests`
+- `rebar3 eunit`
